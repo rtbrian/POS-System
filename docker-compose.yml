@@ -1,0 +1,36 @@
+# version: '3.8'
+
+services:
+  # 1. The Main Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: pos_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: pos_system
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. Redis (For caching and potential message queue)
+  redis:
+    image: redis:alpine
+    container_name: pos_redis
+    ports:
+      - "6379:6379"
+
+  # 3. API Gateway (We will build this code later, but define it now)
+  # gateway:
+  #   build: 
+  #     context: ./backend/gateway
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     - postgres
+  #     - redis
+
+volumes:
+  postgres_data:
