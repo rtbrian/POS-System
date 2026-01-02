@@ -1,30 +1,33 @@
 import { Request, Response } from 'express';
 import { InventoryService } from '../services/inventory.services';
 
-export const createProduct = async (req: Request, res: Response) => {
+// 1. Get Products
+export const getProducts = async (req: Request, res: Response) => {
   try {
-    // In a real app, we get business_id from the User Token (req.user)
-    // For now, we will assume Business ID = 1
-    const businessId = 1; 
-    
-    const product = await InventoryService.createProduct({
-      ...req.body,
-      business_id: businessId
-    });
-
-    res.status(201).json({ message: 'Product created', product });
-  } catch (error: any) {
+    const products = await InventoryService.getProducts();
+    res.json(products);
+  } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to create product' });
+    res.status(500).json({ message: 'Error fetching products' });
   }
 };
 
-export const getProducts = async (req: Request, res: Response) => {
+// 2. Create Product
+export const createProduct = async (req: Request, res: Response) => {
   try {
-    const businessId = 1; // Hardcoded for now
-    const products = await InventoryService.getProducts(businessId);
-    res.json(products);
+    const { name, price, stock } = req.body;
+
+    // Validation
+    if (!name || !price || stock === undefined) {
+      return res.status(400).json({ message: 'Name, price, and stock are required' });
+    }
+
+    // Call Service (Passes 3 arguments)
+    const newProduct = await InventoryService.createProduct(name, price, stock);
+    
+    res.status(201).json(newProduct);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch products' });
+    console.error(error);
+    res.status(500).json({ message: 'Error creating product' });
   }
 };

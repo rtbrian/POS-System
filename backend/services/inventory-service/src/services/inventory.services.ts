@@ -1,38 +1,33 @@
-import { query } from 'shared/src/database/postgres.client';
-import { Product } from '../models/products.model';
+// 👇 CHANGE THIS LINE
+import pool from '../scripts/database'; 
 
 export class InventoryService {
   
-  // 1. Create a new Product
-  static async createProduct(product: Product): Promise<Product> {
-    // ⚠️ We made this one line to avoid "invisible character" errors
-    const sql = 'INSERT INTO products (business_id, name, description, price, stock_quantity, category, barcode) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *';
-    
-    const params = [
-      product.business_id,
-      product.name,
-      product.description || null,   // Safety: Convert undefined to null
-      product.price,
-      product.stock_quantity,
-      product.category || null,      // Safety: Convert undefined to null
-      product.barcode || null        // Safety: Convert undefined to null
-    ];
-
-    try {
-      const result = await query(sql, params);
-      return result.rows[0];
-    } catch (error) {
-      console.error("SQL Error:", error); // This will show us the exact issue if it fails again
-      throw error;
-    }
-  }
-
-  // 2. Get all products for a specific business
-  static async getProducts(businessId: number): Promise<Product[]> {
-    const result = await query(
-      'SELECT * FROM products WHERE business_id = $1 ORDER BY created_at DESC', 
-      [businessId]
+  // 1. Get all products
+  static async getProducts() {
+    const result = await pool.query(
+      'SELECT id, name, price, stock_quantity as stock FROM products ORDER BY id DESC'
     );
     return result.rows;
+  }
+
+  // 2. Create a new Product
+  static async createProduct(name: string, price: number, stock: number) {
+    const sql = `
+      INSERT INTO products (business_id, name, price, stock_quantity) 
+      VALUES ($1, $2, $3, $4) 
+      RETURNING id, name, price, stock_quantity as stock
+    `;
+    
+    // We hardcode business_id = 1 for now
+    const params = [1, name, price, stock]; 
+
+    try {
+      const result = await pool.query(sql, params);
+      return result.rows[0];
+    } catch (error) {
+      console.error("SQL Error:", error);
+      throw error;
+    }
   }
 }
