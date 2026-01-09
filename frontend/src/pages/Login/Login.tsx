@@ -18,7 +18,7 @@ const Login = () => {
     try {
       await loginUser(email, password);
       navigate('/dashboard');
-      // We will add redirection here in the next step
+      
     } catch (err: any) {
       setError(err);
     } finally {
