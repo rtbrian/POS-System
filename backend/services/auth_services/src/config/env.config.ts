@@ -11,5 +11,9 @@ export const config = {
     password: process.env.DB_PASSWORD ,
     name: process.env.DB_NAME ,
     port: parseInt(process.env.DB_PORT || '5432'),
+
+    ssl: {
+      rejectUnauthorized: false
+    }
   },
 };

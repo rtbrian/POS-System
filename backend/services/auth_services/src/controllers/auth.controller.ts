@@ -36,12 +36,16 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
 
+    console.log("1. Controller received login request for:", email);
+
     if (!email || !password) {
       res.status(400).json({ error: 'Email and password are required' });
       return;
     }
 
     const { user, token } = await AuthService.loginUser(email, password);
+
+    console.log("✅ Login successful in Controller!");
 
     res.status(200).json({
       message: 'Login successful',
@@ -50,6 +54,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
 
   } catch (error: any) {
+
+    console.error("❌ Login Failed Error:", error.message);
+
     res.status(401).json({ error: 'Invalid email or password' });
   }
 };

@@ -8,7 +8,7 @@ export class PasswordService {
   }
 
   // Check if password matches hash (We will use this for Login later)
-  static async compare(storedPassword: string, suppliedPassword: string): Promise<boolean> {
-    return bcrypt.compare(suppliedPassword, storedPassword);
+  static async compare(plainPassword: string, storedHash: string): Promise<boolean> {
+    return bcrypt.compare(plainPassword, storedHash);
   }
 }

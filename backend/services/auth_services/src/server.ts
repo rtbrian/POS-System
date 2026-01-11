@@ -3,6 +3,7 @@ import cors from 'cors';
 import { config } from './config/env.config'; // Use new config
 import authRoutes from './routes/auth.routes';
 import { errorHandler } from './middleware/error.middleware'; // Import error handler
+import './config/env.config';
 
 const app = express();
 

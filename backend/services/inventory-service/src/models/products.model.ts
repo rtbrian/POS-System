@@ -4,7 +4,7 @@ export interface Product {
     name: string;
     description?: string;
     price: number;
-    stock_quantity: number;
+    stock: number;
     category?: string;
     barcode?: string;
     created_at?: Date;
