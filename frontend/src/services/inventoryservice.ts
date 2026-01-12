@@ -43,6 +43,8 @@
 // };
 
 // src/services/inventoryservice.ts
+
+
 import { supabase } from '../supabase'; // Ensure you created src/supabase.ts
 
 export interface Product {
