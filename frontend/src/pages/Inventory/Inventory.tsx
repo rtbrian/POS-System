@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getProducts, createProduct, deleteProduct type Product } from '../../services/inventoryservice';
+import { getProducts, createProduct, deleteProduct, type Product } from '../../services/inventoryservice';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
