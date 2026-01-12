@@ -91,3 +91,32 @@ export const createProduct = async (
   }
   return data;
 };
+
+
+// 3. DELETE PRODUCT
+export const deleteProduct = async (id: number) => {
+  const { error } = await supabase
+    .from('products')
+    .delete()
+    .eq('id', id); // ⚠️ VERY IMPORTANT: Delete only the row where id matches
+
+  if (error) {
+    console.error("Supabase Delete Error:", error.message);
+    throw error;
+  }
+};
+
+// 4. UPDATE PRODUCT
+export const updateProduct = async (id: number, updates: Partial<Product>) => {
+  const { data, error } = await supabase
+    .from('products')
+    .update(updates)
+    .eq('id', id)
+    .select();
+
+  if (error) {
+    console.error("Supabase Update Error:", error.message);
+    throw error;
+  }
+  return data;
+};

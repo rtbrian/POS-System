@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getProducts, createProduct, type Product } from '../../services/inventoryservice';
+import { getProducts, createProduct, deleteProduct type Product } from '../../services/inventoryservice';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -97,6 +97,17 @@ const Inventory = () => {
     return { label: 'In Stock', color: 'bg-green-100 text-green-700', icon: <CheckCircle size={14} /> };
   };
 
+  const handleDelete = async (id: number) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      try {
+        await deleteProduct(id);
+        setProducts(products.filter(product => product.id !== id));
+      } catch (error) {
+        alert("Failed to delete product");
+      }
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <div className="flex-1 flex flex-col h-full">
@@ -168,67 +179,77 @@ const Inventory = () => {
               </thead>
               
               <tbody className="divide-y divide-gray-100">
-                {loading ? (
-                  <tr>
-                    <td colSpan={5} className="p-12 text-center text-gray-400">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <Loader2 className="animate-spin h-8 w-8 text-blue-500" />
-                        <p>Loading Inventory...</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : filteredProducts.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="p-12 text-center text-gray-500">
-                      No products found matching your search.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredProducts.map((product) => {
-                    const status = getStockStatus(product.stock);
-                    return (
-                      <tr key={product.id} className="hover:bg-gray-50 transition-colors group">
-                        <td className="p-4">
-                          <p className="font-bold text-gray-800">{product.name}</p>
-                          <p className="text-xs text-gray-400">ID: #{product.id}</p>
-                        </td>
-                        <td className="p-4 font-medium text-gray-800 text-right">
-                          KES {Number(product.price).toLocaleString()}
-                        </td>
-                        <td className="p-4">
-                          <div className="w-32">
-                            <div className="flex justify-between text-xs mb-1">
-                              <span className="font-bold">{product.stock} units</span>
-                            </div>
-                            <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                              <div 
-                                className={`h-full rounded-full ${status.label === 'Low Stock' ? 'bg-orange-500' : status.label === 'Out of Stock' ? 'bg-red-500' : 'bg-green-500'}`} 
-                                style={{ width: `${Math.min(product.stock, 100)}%` }} 
-                              />
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${status.color}`}>
-                            {status.icon}
-                            {status.label}
-                          </span>
-                        </td>
-                        <td className="p-4 text-right">
-                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button className="p-2 hover:bg-blue-50 text-gray-500 hover:text-blue-600 rounded-lg">
-                              <Edit size={16} />
-                            </button>
-                            <button className="p-2 hover:bg-red-50 text-gray-500 hover:text-red-600 rounded-lg">
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
+  {loading ? (
+    <tr>
+      <td colSpan={5} className="p-12 text-center text-gray-400">
+        <div className="flex flex-col items-center justify-center gap-2">
+          <Loader2 className="animate-spin h-8 w-8 text-blue-500" />
+          <p>Loading Inventory...</p>
+        </div>
+      </td>
+    </tr>
+  ) : filteredProducts.length === 0 ? (
+    <tr>
+      <td colSpan={5} className="p-12 text-center text-gray-500">
+        No products found matching your search.
+      </td>
+    </tr>
+  ) : (
+    filteredProducts.map((product) => {
+      const status = getStockStatus(product.stock);
+      return (
+        <tr key={product.id} className="hover:bg-gray-50 transition-colors group">
+          <td className="p-4">
+            <p className="font-bold text-gray-800">{product.name}</p>
+            <p className="text-xs text-gray-400">ID: #{product.id}</p>
+          </td>
+          <td className="p-4 font-medium text-gray-800 text-right">
+            KES {Number(product.price).toLocaleString()}
+          </td>
+          <td className="p-4">
+            <div className="w-32">
+              <div className="flex justify-between text-xs mb-1">
+                <span className="font-bold">{product.stock} units</span>
+              </div>
+              <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full rounded-full ${status.label === 'Low Stock' ? 'bg-orange-500' : status.label === 'Out of Stock' ? 'bg-red-500' : 'bg-green-500'}`} 
+                  style={{ width: `${Math.min(product.stock, 100)}%` }} 
+                />
+              </div>
+            </div>
+          </td>
+          <td className="p-4">
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${status.color}`}>
+              {status.icon}
+              {status.label}
+            </span>
+          </td>
+          <td className="p-4 text-right">
+            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              
+              {/* EDIT BUTTON (Placeholder for now) */}
+              <button 
+                onClick={() => alert("Edit feature coming soon!")}
+                className="p-2 hover:bg-blue-50 text-gray-500 hover:text-blue-600 rounded-lg"
+              >
+                <Edit size={16} />
+              </button>
+
+              {/* DELETE BUTTON (Now Active) */}
+              <button 
+                onClick={() => handleDelete(product.id)}
+                className="p-2 hover:bg-red-50 text-gray-500 hover:text-red-600 rounded-lg"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </td>
+        </tr>
+      );
+    })
+  )}
+</tbody>
             </table>
           </div>
         </div>
