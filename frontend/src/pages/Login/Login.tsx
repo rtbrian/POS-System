@@ -41,7 +41,7 @@ const Login = () => {
           <div className="bg-white/20 p-4 rounded-2xl inline-block mb-6 backdrop-blur-sm">
             <Store size={64} className="text-white" />
           </div>
-          <h1 className="text-5xl font-bold mb-4 tracking-tight">Kirinyaga POS</h1>
+          <h1 className="text-5xl font-bold mb-4 tracking-tight">B.M.Tech POS</h1>
           <p className="text-blue-100 text-xl max-w-md mx-auto font-light">
             Secure, fast, and reliable point of sale management for your business.
           </p>
