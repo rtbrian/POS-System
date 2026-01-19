@@ -1,4 +1,4 @@
-import { query } from './database/postgres.client';
+import { query } from './src/database/postgres.client';
 
 async function testConnection() {
   console.log('🔄 Attempting to connect...');
