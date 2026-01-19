@@ -22,8 +22,12 @@ const Login = () => {
       setTimeout(() => navigate('/dashboard'), 500);
       
     } catch (err: any) {
-      setError(err.message || "Invalid email or password");
-    } finally {
+      console.log("Login Error Caught:", err); // 👈 Helpful for debugging
+  
+      // Check if 'err' is just a string (custom message) or an object
+      const errorMessage = typeof err === 'string' ? err : err.message;
+      
+      setError(errorMessage || "Invalid email or password");    } finally {
       setLoading(false);
     }
   };

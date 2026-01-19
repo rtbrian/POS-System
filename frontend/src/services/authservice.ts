@@ -1,53 +1,44 @@
 // src/services/authservice.ts
-import { supabase } from '../supabase'; // ✅ Matches 'export const' above
 import { api } from './api';
 
+// 1. LOGIN (Updated to use your Backend)
 export const loginUser = async (email: string, password: string) => {
   try {
-    // 1. Direct call to Supabase Auth
-    // If this line is red, run: npm install @supabase/supabase-js@latest
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    });
+    // Send request to your Render Backend (not Supabase directly)
+    const response = await api.post('/auth/login', { email, password });
+    
+    // The backend returns: { user: {...}, token: "..." }
+    const { user, token } = response.data;
 
-    if (error) throw error;
-
-    // 2. Save session to LocalStorage (so your app remembers the user)
-    if (data.session) {
-      localStorage.setItem('token', data.session.access_token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+    // Save to LocalStorage so the app remembers you
+    if (token) {
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
     }
 
-    return { 
-      user: data.user, 
-      token: data.session?.access_token 
-    };
-
+    return response.data;
   } catch (error: any) {
-    console.error("Login Error:", error.message);
-    // Return a clean error message to the UI
-    throw error.message || 'Login failed';
+    console.error("Login Error:", error);
+    throw error.response?.data?.message || 'Login failed';
   }
 };
 
+// 2. REGISTER (Already Correct - Keep as is)
 export const registerUser = async (email: string, password: string) => {
-  // This calls POST http://localhost:10000/api/auth/register
   const response = await api.post('/auth/register', { email, password });
   return response.data;
 };
 
+// 3. LOGOUT (Updated to clear local data)
 export const logoutUser = async () => {
-  // 1. Kill Supabase session
-  const { error } = await supabase.auth.signOut();
-  if (error) console.error("Logout Error:", error.message);
-
-  // 2. Clear LocalStorage
+  // We don't need to call the backend for logout with JWTs, 
+  // just throw away the key (token).
   localStorage.removeItem('token');
   localStorage.removeItem('user');
 };
 
-export const getCurrentUser = async () => {
-  const { data } = await supabase.auth.getUser();
-  return data.user;
+// 4. GET CURRENT USER (Updated to read from memory)
+export const getCurrentUser = () => {
+  const userStr = localStorage.getItem('user');
+  return userStr ? JSON.parse(userStr) : null;
 };
