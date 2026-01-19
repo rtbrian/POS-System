@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { loginUser } from '../../services/authservice';
 import { Lock, Mail, Eye, EyeOff, Store, Loader2 } from 'lucide-react'; // Added new icons
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -135,7 +135,16 @@ const Login = () => {
               )}
             </button>
           </form>
-          
+          <div className="mt-4 text-center border-t pt-4">
+            <p className="text-sm text-gray-600">
+            Don't have an account?{' '}
+              <Link 
+              to="/register" 
+              className="text-blue-600 font-semibold hover:underline">
+              Sign Up
+              </Link>
+            </p>
+          </div>
           <p className="text-center text-sm text-gray-400 mt-6">
             © 2026 B.M.Tech POS Systems
           </p>

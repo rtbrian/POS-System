@@ -1,5 +1,6 @@
 // src/services/authservice.ts
 import { supabase } from '../supabase'; // ✅ Matches 'export const' above
+import { api } from './api';
 
 export const loginUser = async (email: string, password: string) => {
   try {
@@ -28,6 +29,12 @@ export const loginUser = async (email: string, password: string) => {
     // Return a clean error message to the UI
     throw error.message || 'Login failed';
   }
+};
+
+export const registerUser = async (email: string, password: string) => {
+  // This calls POST http://localhost:10000/api/auth/register
+  const response = await api.post('/auth/register', { email, password });
+  return response.data;
 };
 
 export const logoutUser = async () => {
