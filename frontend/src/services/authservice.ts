@@ -13,6 +13,9 @@ export const registerUser = async (email: string, password: string) => {
   const { data, error } = await getSupabaseClient().auth.signUp({
     email: email.trim(),
     password,
+    options: {
+      emailRedirectTo: `${window.location.origin}/login`,
+    },
   });
   if (error) throw error;
   return data;

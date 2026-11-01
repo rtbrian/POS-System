@@ -29,6 +29,12 @@ Express as a bearer token. Express validates it with Supabase Auth and reads the
 business assignment only from the user's trusted `app_metadata`; it never trusts
 client-supplied business IDs or editable `user_metadata`.
 
+The signup flow requests a confirmation redirect to the current app origin at
+`/login`. In Supabase **Authentication → URL Configuration**, add
+`http://localhost:5173/login` to the redirect URL allow list for local development.
+Add the deployed frontend's login URL there as well for production. Confirmation
+emails can only redirect to URLs allowed by the Supabase project.
+
 Before a Supabase Auth user can use product endpoints, an administrator must
 assign a positive integer `business_id` in that user's `app_metadata`. An optional
 `role` string can also be set there. Newly self-registered accounts do not receive
