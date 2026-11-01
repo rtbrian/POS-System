@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getProducts, createProduct, deleteProduct, type Product } from '../../services/inventoryservice';
+import { useCreateProduct, useDeleteProduct, useProducts } from '../../hooks/useProducts';
+import { getErrorMessage } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -19,15 +20,24 @@ const Inventory = () => {
   const navigate = useNavigate();
   
   // 🟢 STATE: Data & UI
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('All'); // 'All', 'Low Stock', 'Out of Stock'
+  const [page, setPage] = useState(1);
+  const [actionError, setActionError] = useState('');
 
   // 🟢 STATE: Modal Form
   const [showModal, setShowModal] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const createMutation = useCreateProduct();
+  const deleteMutation = useDeleteProduct();
+  const productsQuery = useProducts({
+    page,
+    limit: 50,
+    search: debouncedSearch || undefined,
+    stockStatus: filterStatus === 'Low Stock' ? 'low' : filterStatus === 'Out of Stock' ? 'out' : undefined,
+  });
+  const products = productsQuery.data?.data ?? [];
+
   // ✅ Updated State to include Category and Description
   const [formData, setFormData] = useState({ 
     name: '', 
@@ -37,56 +47,33 @@ const Inventory = () => {
     description: '' 
   });
 
-  // 1. Fetch Data
+  // Debounce search so each keystroke does not trigger a request.
   useEffect(() => {
-    loadProducts();
-  }, []);
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+      setPage(1);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
 
-  const loadProducts = async () => {
-    try {
-      const data = await getProducts();
-      setProducts(data);
-    } catch (err) {
-      console.error("Failed to fetch products", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 2. Filter Logic
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    let matchesStatus = true;
-    if (filterStatus === 'Low Stock') matchesStatus = product.stock > 0 && product.stock <= 10;
-    if (filterStatus === 'Out of Stock') matchesStatus = product.stock === 0;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  // 3. Submit Logic (Includes new fields)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.price || !formData.stock) return;
+    if (!formData.name.trim() || formData.price === '' || formData.stock === '') return;
 
-    setIsSubmitting(true);
+    setActionError('');
     try {
-      await createProduct(
-        formData.name, 
-        parseFloat(formData.price), 
-        parseInt(formData.stock),
-        formData.category,   // Passing Category
-        formData.description // Passing Description
-      );
-      
-      await loadProducts(); // Refresh list
+      await createMutation.mutateAsync({
+        name: formData.name.trim(),
+        price: Number(formData.price),
+        stock: Number(formData.stock),
+        category: formData.category || null,
+        description: formData.description || null,
+      });
+      setPage(1);
       setShowModal(false);
-      setFormData({ name: '', price: '', stock: '', category: '', description: '' }); // Reset
-      alert("Product Created Successfully! 🎉");
-    } catch (error) {
-      alert("Failed to add product");
-    } finally {
-      setIsSubmitting(false);
+      setFormData({ name: '', price: '', stock: '', category: '', description: '' });
+    } catch (error: unknown) {
+      setActionError(getErrorMessage(error, 'Failed to add product'));
     }
   };
 
@@ -100,10 +87,9 @@ const Inventory = () => {
   const handleDelete = async (id: number) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
-        await deleteProduct(id);
-        setProducts(products.filter(product => product.id !== id));
-      } catch (error) {
-        alert("Failed to delete product");
+        await deleteMutation.mutateAsync(id);
+      } catch (error: unknown) {
+        setActionError(getErrorMessage(error, 'Failed to delete product'));
       }
     }
   };
@@ -154,7 +140,10 @@ const Inventory = () => {
               <select 
                 className="bg-transparent text-sm font-medium text-gray-700 outline-none cursor-pointer"
                 value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
+                onChange={(e) => {
+                  setFilterStatus(e.target.value);
+                  setPage(1);
+                }}
               >
                 <option value="All">All Status</option>
                 <option value="Low Stock">Low Stock</option>
@@ -163,6 +152,12 @@ const Inventory = () => {
             </div>
           </div>
         </div>
+
+        {(actionError || productsQuery.error) && (
+          <div className="mx-6 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {actionError || getErrorMessage(productsQuery.error, 'Could not load products')}
+          </div>
+        )}
 
         {/* 🔵 TABLE AREA */}
         <div className="flex-1 overflow-y-auto p-6">
@@ -179,7 +174,7 @@ const Inventory = () => {
               </thead>
               
               <tbody className="divide-y divide-gray-100">
-  {loading ? (
+  {productsQuery.isLoading ? (
     <tr>
       <td colSpan={5} className="p-12 text-center text-gray-400">
         <div className="flex flex-col items-center justify-center gap-2">
@@ -188,14 +183,14 @@ const Inventory = () => {
         </div>
       </td>
     </tr>
-  ) : filteredProducts.length === 0 ? (
+  ) : products.length === 0 ? (
     <tr>
       <td colSpan={5} className="p-12 text-center text-gray-500">
-        No products found matching your search.
+        No products found matching your filters.
       </td>
     </tr>
   ) : (
-    filteredProducts.map((product) => {
+    products.map((product) => {
       const status = getStockStatus(product.stock);
       return (
         <tr key={product.id} className="hover:bg-gray-50 transition-colors group">
@@ -251,6 +246,31 @@ const Inventory = () => {
   )}
 </tbody>
             </table>
+          </div>
+          <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+            <span>
+              {productsQuery.data
+                ? `${productsQuery.data.total} products · Page ${productsQuery.data.page} of ${Math.max(productsQuery.data.totalPages, 1)}`
+                : 'Loading products'}
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={page <= 1 || productsQuery.isFetching}
+                className="rounded border px-3 py-1 disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                onClick={() => setPage((current) => current + 1)}
+                disabled={!productsQuery.data || page >= productsQuery.data.totalPages || productsQuery.isFetching}
+                className="rounded border px-3 py-1 disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
 
@@ -340,10 +360,10 @@ const Inventory = () => {
                 <div className="pt-2">
                   <button 
                     type="submit" 
-                    disabled={isSubmitting}
+                    disabled={createMutation.isPending}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-bold shadow-md shadow-blue-200 transition-all flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isSubmitting ? (
+                    {createMutation.isPending ? (
                       <>
                         <Loader2 className="animate-spin h-5 w-5" /> Saving...
                       </>

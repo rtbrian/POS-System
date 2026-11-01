@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { getProducts, type Product } from '../../services/inventoryservice';
+import { useProducts } from '../../hooks/useProducts';
+import { type Product } from '../../services/inventoryservice';
 import { useNavigate } from 'react-router-dom';
+import { getErrorMessage } from '../../services/api';
 import { 
   ArrowLeft, 
   // Trash2, 
@@ -25,46 +27,39 @@ const POS = () => {
   const navigate = useNavigate();
   
   // 🟢 STATE
-  const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [isLoading, setIsLoading] = useState(true);
-
-  // 1. Load Products on Mount
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
-  const loadProducts = async () => {
-    try {
-      const data = await getProducts();
-      setProducts(data);
-    } catch (error) {
-      console.error("Failed to load products");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // 2. Filter Logic (Search + Category)
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-    // Note: If your API product doesn't have a 'category' field yet, this will just ignore category filtering
-    const matchesCategory = selectedCategory === 'All' || (product as any).category === selectedCategory;
-    return matchesSearch && matchesCategory;
+  const [page, setPage] = useState(1);
+  const productsQuery = useProducts({
+    page,
+    limit: 50,
+    search: debouncedSearch || undefined,
+    category: selectedCategory === 'All' ? undefined : selectedCategory,
   });
+  const products = productsQuery.data?.data ?? [];
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+      setPage(1);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
 
   // 3. Add to Cart (With Quantity Logic)
   const addToCart = (product: Product) => {
     setCart(prevCart => {
       const existing = prevCart.find(item => item.id === product.id);
       if (existing) {
+        if (existing.qty >= product.stock) return prevCart;
         // If item exists, increase quantity
         return prevCart.map(item => 
           item.id === product.id ? { ...item, qty: item.qty + 1 } : item
         );
       }
+      if (product.stock < 1) return prevCart;
       // If new, add with qty 1
       return [...prevCart, { ...product, qty: 1 }];
     });
@@ -75,7 +70,7 @@ const POS = () => {
     setCart(prevCart => prevCart.map(item => {
       if (item.id === id) {
         const newQty = item.qty + delta;
-        return newQty > 0 ? { ...item, qty: newQty } : item;
+        return newQty > 0 && newQty <= item.stock ? { ...item, qty: newQty } : item;
       }
       return item;
     }));
@@ -130,7 +125,10 @@ const POS = () => {
             {CATEGORIES.map(cat => (
               <button
                 key={cat}
-                onClick={() => setSelectedCategory(cat)}
+                onClick={() => {
+                  setSelectedCategory(cat);
+                  setPage(1);
+                }}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors
                   ${selectedCategory === cat 
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-200' 
@@ -144,15 +142,24 @@ const POS = () => {
 
         {/* Scrollable Grid */}
         <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
-          {isLoading ? (
+          {productsQuery.error ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              {getErrorMessage(productsQuery.error, 'Could not load products')}
+            </div>
+          ) : productsQuery.isLoading ? (
             <div className="flex items-center justify-center h-64 text-gray-400">Loading Products...</div>
+          ) : products.length === 0 ? (
+            <div className="flex items-center justify-center h-64 text-gray-500">No products match your filters.</div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {filteredProducts.map((product) => (
+              {products.map((product) => (
                 <div
                   key={product.id}
                   onClick={() => addToCart(product)}
-                  className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-lg hover:border-blue-400 transition-all group flex flex-col items-center text-center h-48 justify-between relative overflow-hidden"
+                  aria-disabled={product.stock < 1}
+                  className={`bg-white p-4 rounded-xl shadow-sm border border-gray-100 transition-all group flex flex-col items-center text-center h-48 justify-between relative overflow-hidden ${
+                    product.stock > 0 ? 'cursor-pointer hover:shadow-lg hover:border-blue-400' : 'cursor-not-allowed opacity-60'
+                  }`}
                 >
                   <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-bl-lg">
                     Stock: {product.stock}
@@ -172,6 +179,29 @@ const POS = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+          {productsQuery.data && (
+            <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+              <span>{productsQuery.data.total} products · Page {page} of {Math.max(productsQuery.data.totalPages, 1)}</span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  disabled={page <= 1 || productsQuery.isFetching}
+                  className="rounded border bg-white px-3 py-1 disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage((current) => current + 1)}
+                  disabled={page >= productsQuery.data.totalPages || productsQuery.isFetching}
+                  className="rounded border bg-white px-3 py-1 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -222,7 +252,7 @@ const POS = () => {
                     <Minus size={14} />
                   </button>
                   <span className="text-sm font-bold w-4 text-center">{item.qty}</span>
-                  <button onClick={() => updateQty(item.id, 1)} className="p-1 hover:bg-gray-100 rounded text-green-600">
+                  <button onClick={() => updateQty(item.id, 1)} disabled={item.qty >= item.stock} className="p-1 hover:bg-gray-100 rounded text-green-600 disabled:opacity-40">
                     <Plus size={14} />
                   </button>
                 </div>

@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { logoutUser } from '../../services/authservice';
-import { getProducts } from '../../services/inventoryservice';
+import { getErrorMessage } from '../../services/api';
+import { useAuth } from '../../auth/AuthContext';
+import { useProducts } from '../../hooks/useProducts';
 import { 
   LayoutDashboard, 
   ShoppingCart, 
@@ -15,30 +17,22 @@ import {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  // Safe parsing of user data
-  const user = JSON.parse(localStorage.getItem('user') || '{"email": "User"}');
+  const { session } = useAuth();
+  const email = session?.user.email ?? 'User';
   
   // State for UI and Data
-  const [productCount, setProductCount] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
-  // 1. Fetch Data Logic (Kept exactly as you had it)
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const products = await getProducts();
-        setProductCount(products.length);
-      } catch (error) {
-        console.error("Failed to load products");
-      }
-    };
-    fetchData();
-  }, []);
+  const productsQuery = useProducts({ page: 1, limit: 1 });
+  const productCount = productsQuery.data?.total;
 
   // 2. Logout Logic
-  const handleLogout = () => {
-    logoutUser();
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      navigate('/login');
+    } catch (error) {
+      console.error('Failed to log out:', getErrorMessage(error, 'Unknown error'));
+    }
   };
 
   return (
@@ -84,11 +78,11 @@ const Dashboard = () => {
           </button>
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold text-gray-700">{user.email}</p>
+              <p className="text-sm font-bold text-gray-700">{email}</p>
               <p className="text-xs text-green-600">Online</p>
             </div>
             <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
-              {user.email.charAt(0).toUpperCase()}
+              {email.charAt(0).toUpperCase()}
             </div>
           </div>
         </header>
@@ -126,13 +120,19 @@ const Dashboard = () => {
                 <div>
                   <p className="text-gray-500 text-sm font-medium">Total Products</p>
                   {/* 👇 DISPLAYING YOUR STATE HERE */}
-                  <h3 className="text-2xl font-bold text-gray-800 mt-1">{productCount}</h3>
+                  <h3 className="text-2xl font-bold text-gray-800 mt-1">
+                    {productsQuery.isLoading ? '…' : productCount ?? '—'}
+                  </h3>
                 </div>
                 <div className="p-3 bg-green-50 rounded-lg text-green-600 group-hover:bg-green-600 group-hover:text-white transition-colors">
                   <Package size={24} />
                 </div>
               </div>
-              <p className="text-sm text-gray-400 mt-4">Items currently in stock</p>
+              <p className="text-sm text-gray-400 mt-4">
+                {productsQuery.error
+                  ? getErrorMessage(productsQuery.error, 'Could not load products')
+                  : 'Items currently in stock'}
+              </p>
             </div>
 
             {/* Card 3: Active Orders (Static for now) */}

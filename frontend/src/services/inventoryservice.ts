@@ -1,52 +1,52 @@
-// 👇 We import 'api' (Axios) instead of 'supabase'
 import { api } from './api';
 
 export interface Product {
   id: number;
   name: string;
-  price: number;
+  price: number | string;
   stock: number;
-  description?: string;
-  category?: string;
-  business_id?: number; // Added to match your backend model
+  description: string | null;
+  category: string | null;
+  business_id: number;
 }
 
-// 1. GET PRODUCTS (Call Backend)
-export const getProducts = async (): Promise<Product[]> => {
-  try {
-    const response = await api.get('/products');
-    return response.data;
-  } catch (error) {
-    console.error("Backend Load Error:", error);
-    return [];
-  }
-};
+export interface ProductQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  category?: string;
+  stockStatus?: 'low' | 'out';
+}
 
-// 2. CREATE PRODUCT (Call Backend)
-export const createProduct = async (
-  name: string, 
-  price: number, 
-  stock: number, 
-  category?: string, 
-  description?: string
-) => {
-  const response = await api.post('/products', { 
-    name, 
-    price, 
-    stock, 
-    category, 
-    description 
-  });
+export interface ProductPage {
+  data: Product[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export type ProductInput = Pick<Product, 'name' | 'price' | 'stock'> &
+  Partial<Pick<Product, 'category' | 'description'>>;
+
+export const getProducts = async (filters: ProductQuery = {}): Promise<ProductPage> => {
+  const response = await api.get<ProductPage>('/products', { params: filters });
   return response.data;
 };
 
-// 3. DELETE PRODUCT (Call Backend)
-export const deleteProduct = async (id: number) => {
+export const createProduct = async (product: ProductInput): Promise<Product> => {
+  const response = await api.post<Product>('/products', product);
+  return response.data;
+};
+
+export const deleteProduct = async (id: number): Promise<void> => {
   await api.delete(`/products/${id}`);
 };
 
-// 4. UPDATE PRODUCT (Call Backend)
-export const updateProduct = async (id: number, updates: Partial<Product>) => {
-  const response = await api.put(`/products/${id}`, updates);
+export const updateProduct = async (
+  id: number,
+  updates: Partial<ProductInput>,
+): Promise<Product> => {
+  const response = await api.put<Product>(`/products/${id}`, updates);
   return response.data;
 };
