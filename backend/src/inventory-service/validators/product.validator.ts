@@ -26,10 +26,10 @@ export const updateProductSchema = z.object({
   message: 'At least one product field must be provided',
 });
 
-export const productIdSchema = z.coerce.number().int().positive();
+export const productIdSchema = z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER);
 
 export const productFiltersSchema = z.object({
-  page: z.coerce.number().int().positive().default(1),
+  page: z.coerce.number().int().positive().max(1_000_000).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(50),
   search: z.string().trim().max(200).optional(),
   category: z.string().trim().max(80).optional(),

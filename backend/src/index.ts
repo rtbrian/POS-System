@@ -29,9 +29,14 @@ app.use(cors({
 }));
 app.use(rateLimit({
   windowMs: 60_000,
-  limit: 120,
+  limit: 600,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
+  handler: (_req, res) => {
+    res.status(429).json({
+      error: { code: 'RATE_LIMITED', message: 'Too many requests; try again shortly' },
+    });
+  },
 }));
 
 app.get('/health', async (_req, res, next) => {

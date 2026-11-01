@@ -34,5 +34,5 @@ pool.on('error', (error) => {
 
 export const query = <Row extends QueryResultRow = QueryResultRow>(
   text: string,
-  params?: readonly unknown[],
+  params?: Array<string | number | boolean | null | Date>,
 ): Promise<QueryResult<Row>> => pool.query<Row>(text, params);

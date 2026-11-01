@@ -36,6 +36,9 @@ const Register = () => {
     <div className="flex justify-center items-center h-screen bg-gray-100">
       <div className="w-96 p-6 shadow-lg bg-white rounded-md">
         <h2 className="text-2xl font-bold mb-4 text-center">Sign Up</h2>
+        <p className="mb-4 text-center text-xs text-gray-500">
+          New accounts need a business assignment from an administrator before they can access inventory.
+        </p>
         {error && <p className="text-red-500 text-sm mb-3 text-center">{error}</p>}
         {notice && <p className="text-green-700 text-sm mb-3 text-center">{notice}</p>}
         <form onSubmit={handleRegister}>

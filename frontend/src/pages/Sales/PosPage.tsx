@@ -221,7 +221,7 @@ const POS = () => {
               {cart.reduce((acc, item) => acc + item.qty, 0)} Items
             </span>
           </div>
-          <p className="text-gray-400 text-xs">Order ID: #{Date.now().toString().slice(-6)}</p>
+          <p className="text-gray-400 text-xs">Draft sale</p>
         </div>
 
         {/* Cart Items List */}

@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { AuthProvider } from './auth/AuthContext';
+import { AuthProvider } from './auth/AuthProvider';
 import ProtectedRoute from './auth/ProtectedRoute';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Inventory from './pages/Inventory/Inventory';

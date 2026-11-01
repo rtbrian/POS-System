@@ -16,6 +16,8 @@ export interface ProductInput {
   description?: string | null;
 }
 
+export type ProductUpdateInput = Partial<ProductInput>;
+
 export interface ProductFilters {
   page: number;
   limit: number;

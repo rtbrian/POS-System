@@ -1,5 +1,11 @@
 import { query } from '../../postgres.client';
-import { Product, ProductFilters, ProductInput, ProductPage } from '../models/products.model';
+import {
+  Product,
+  ProductFilters,
+  ProductInput,
+  ProductPage,
+  ProductUpdateInput,
+} from '../models/products.model';
 
 export class ProductService {
   static async getAllProducts(businessId: number, filters: ProductFilters): Promise<ProductPage> {
@@ -74,7 +80,7 @@ export class ProductService {
   static async updateProduct(
     id: number,
     businessId: number,
-    data: ProductInput,
+    data: ProductUpdateInput,
   ): Promise<Product | undefined> {
     const columns = {
       name: 'name',

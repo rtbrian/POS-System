@@ -3,9 +3,8 @@ import {
   createProduct,
   deleteProduct,
   getProducts,
-  ProductInput,
-  ProductQuery,
 } from '../services/inventoryservice';
+import type { ProductInput, ProductQuery } from '../services/inventoryservice';
 
 export const productsQueryKey = ['products'] as const;
 

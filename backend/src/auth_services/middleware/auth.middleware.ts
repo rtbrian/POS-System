@@ -9,6 +9,10 @@ export interface AuthenticatedUser {
   role: string;
 }
 
+export interface AuthRequest extends Request {
+  user?: AuthenticatedUser;
+}
+
 declare global {
   namespace Express {
     interface Request {
@@ -32,6 +36,10 @@ export const verifyToken = async (
 
   try {
     const { data, error } = await supabaseAuth.auth.getUser(match[1]);
+    if (error?.name === 'AuthRetryableFetchError') {
+      next(new AppError(503, 'AUTH_PROVIDER_UNAVAILABLE', 'Authentication service is temporarily unavailable'));
+      return;
+    }
     if (error || !data.user?.email) {
       next(new AppError(401, 'UNAUTHORIZED', 'Your session is invalid or expired'));
       return;

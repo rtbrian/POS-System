@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { logoutUser } from '../../services/authservice';
 import { getErrorMessage } from '../../services/api';
-import { useAuth } from '../../auth/AuthContext';
+import { useAuth } from '../../auth/useAuth';
 import { useProducts } from '../../hooks/useProducts';
+import type { ReactNode } from 'react';
 import { 
   LayoutDashboard, 
   ShoppingCart, 
@@ -156,9 +157,15 @@ const Dashboard = () => {
   );
 };
 
-// Helper Component for Sidebar Items
-// eslint-disable-next-line react/prop-types
-const SidebarItem = ({ icon, text, active, isOpen, onClick }: any) => {
+interface SidebarItemProps {
+  icon: ReactNode;
+  text: string;
+  active?: boolean;
+  isOpen: boolean;
+  onClick: () => void;
+}
+
+const SidebarItem = ({ icon, text, active = false, isOpen, onClick }: SidebarItemProps) => {
   return (
     <div 
       onClick={onClick}
