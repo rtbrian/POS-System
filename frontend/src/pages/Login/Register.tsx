@@ -2,25 +2,31 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { registerUser } from '../../services/authservice'; // Note the path change (../../)
+import { getErrorMessage } from '../../services/api';
 
 const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setNotice('');
     setLoading(true);
 
     try {
-      await registerUser(email, password);
-      alert('Registration successful! Please log in.');
-      navigate('/login');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed');
+      const { session } = await registerUser(email, password);
+      if (session) {
+        navigate('/dashboard');
+      } else {
+        setNotice('Check your email to confirm your account, then sign in.');
+      }
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Registration failed'));
     } finally {
       setLoading(false);
     }
@@ -31,6 +37,7 @@ const Register = () => {
       <div className="w-96 p-6 shadow-lg bg-white rounded-md">
         <h2 className="text-2xl font-bold mb-4 text-center">Sign Up</h2>
         {error && <p className="text-red-500 text-sm mb-3 text-center">{error}</p>}
+        {notice && <p className="text-green-700 text-sm mb-3 text-center">{notice}</p>}
         <form onSubmit={handleRegister}>
           <div className="mb-4">
             <label className="block text-gray-700">Email</label>
@@ -40,7 +47,7 @@ const Register = () => {
           <div className="mb-4">
             <label className="block text-gray-700">Password</label>
             <input type="password" className="w-full p-2 border border-gray-300 rounded mt-1"
-              value={password} onChange={(e) => setPassword(e.target.value)} required />
+              value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} required />
           </div>
           <button type="submit" disabled={loading}
             className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700 transition">

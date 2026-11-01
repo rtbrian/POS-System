@@ -1,12 +1,15 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// These variables come from your Vercel Environment Settings
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://axhovhumajbutzcdlilf.supabase.co';
+const supabaseKey =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Check if keys are missing (helps debug white screens)
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error("Missing Supabase URL or Key. Check your .env or Vercel Settings.");
-}
+let client: SupabaseClient | undefined;
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const getSupabaseClient = (): SupabaseClient => {
+  if (!supabaseKey) {
+    throw new Error('Set VITE_SUPABASE_PUBLISHABLE_KEY in frontend/.env.local to enable authentication.');
+  }
+  client ??= createClient(supabaseUrl, supabaseKey);
+  return client;
+};

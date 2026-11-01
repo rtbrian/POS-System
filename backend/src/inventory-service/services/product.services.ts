@@ -1,73 +1,106 @@
-// 👇 FIXED IMPORT: This looks correct
 import { query } from '../../postgres.client';
+import { Product, ProductFilters, ProductInput, ProductPage } from '../models/products.model';
 
 export class ProductService {
-  
-  // 1. Get all products
-  static async getAllProducts() {
-    // ✅ Correct: Uses 'query'
-    const result = await query(
-      `SELECT id, business_id, name, price, stock_quantity as stock, category, description 
-       FROM products 
-       ORDER BY id ASC`
+  static async getAllProducts(businessId: number, filters: ProductFilters): Promise<ProductPage> {
+    const conditions = ['business_id = $1'];
+    const values: Array<string | number> = [businessId];
+
+    if (filters.search) {
+      values.push(`%${filters.search}%`);
+      conditions.push(`name ILIKE $${values.length}`);
+    }
+    if (filters.category) {
+      values.push(filters.category);
+      conditions.push(`category = $${values.length}`);
+    }
+    if (filters.stockStatus === 'out') {
+      conditions.push('stock_quantity = 0');
+    } else if (filters.stockStatus === 'low') {
+      conditions.push('stock_quantity BETWEEN 1 AND 10');
+    }
+
+    const where = conditions.join(' AND ');
+    const countResult = await query(
+      `SELECT COUNT(*)::int AS total FROM products WHERE ${where}`,
+      values,
     );
-    return result.rows;
+    const total = countResult.rows[0].total as number;
+    const offset = (filters.page - 1) * filters.limit;
+    const pageValues = [...values, filters.limit, offset];
+    const result = await query(
+      `SELECT id, business_id, name, price, stock_quantity AS stock, category, description
+       FROM products
+       WHERE ${where}
+       ORDER BY id ASC
+       LIMIT $${pageValues.length - 1} OFFSET $${pageValues.length}`,
+      pageValues,
+    );
+
+    return {
+      data: result.rows as Product[],
+      page: filters.page,
+      limit: filters.limit,
+      total,
+      totalPages: Math.ceil(total / filters.limit),
+    };
   }
 
-  // 2. Create a new product
-  static async createProduct(data: any) {
-    const sql = `
-      INSERT INTO products (business_id, name, price, stock_quantity, category, description) 
-      VALUES ($1, $2, $3, $4, $5, $6) 
-      RETURNING id, name, price, stock_quantity as stock, category, description
-    `;
-    
-    const params = [
-      data.business_id || 1, 
-      data.name, 
-      data.price, 
-      data.stock,
-      data.category || null,
-      data.description || null
-    ];
-
-    // 👇 FIXED: Changed 'pool.query' to 'query'
-    const result = await query(sql, params);
-    return result.rows[0];
+  static async createProduct(businessId: number, data: ProductInput): Promise<Product> {
+    const result = await query(
+      `INSERT INTO products (business_id, name, price, stock_quantity, category, description)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, business_id, name, price, stock_quantity AS stock, category, description`,
+      [
+        businessId,
+        data.name,
+        data.price,
+        data.stock,
+        data.category ?? null,
+        data.description ?? null,
+      ],
+    );
+    return result.rows[0] as Product;
   }
 
-  // 3. DELETE Product
-  static async deleteProduct(id: number) {
-    const sql = 'DELETE FROM products WHERE id = $1';
-    // 👇 FIXED: Changed 'pool.query' to 'query'
-    await query(sql, [id]);
-    return { message: 'Product deleted' };
+  static async deleteProduct(id: number, businessId: number): Promise<boolean> {
+    const result = await query(
+      'DELETE FROM products WHERE id = $1 AND business_id = $2',
+      [id, businessId],
+    );
+    return (result.rowCount ?? 0) > 0;
   }
 
-  // 4. UPDATE Product
-  static async updateProduct(id: number, data: any) {
-    const sql = `
-      UPDATE products 
-      SET name = COALESCE($1, name),
-          price = COALESCE($2, price),
-          stock_quantity = COALESCE($3, stock_quantity),
-          category = COALESCE($4, category),
-          description = COALESCE($5, description)
-      WHERE id = $6
-      RETURNING id, name, price, stock_quantity as stock, category, description
-    `;
+  static async updateProduct(
+    id: number,
+    businessId: number,
+    data: ProductInput,
+  ): Promise<Product | undefined> {
+    const columns = {
+      name: 'name',
+      price: 'price',
+      stock: 'stock_quantity',
+      category: 'category',
+      description: 'description',
+    } as const;
+    const updates: string[] = [];
+    const values: Array<string | number | null> = [];
 
-    const params = [
-      data.name, 
-      data.price, 
-      data.stock, 
-      data.category,
-      data.description,
-      id
-    ];
+    for (const key of Object.keys(columns) as Array<keyof typeof columns>) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
+        values.push(data[key] ?? null);
+        updates.push(`${columns[key]} = $${values.length}`);
+      }
+    }
 
-    // 👇 FIXED: Changed 'pool.query' to 'query'
-    const result = await query(sql, params);
-    return result.rows[0];
+    values.push(id, businessId);
+    const result = await query(
+      `UPDATE products
+       SET ${updates.join(', ')}
+       WHERE id = $${values.length - 1} AND business_id = $${values.length}
+       RETURNING id, business_id, name, price, stock_quantity AS stock, category, description`,
+      values,
+    );
+    return result.rows[0] as Product | undefined;
   }
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { loginUser } from '../../services/authservice';
 import { Lock, Mail, Eye, EyeOff, Store, Loader2 } from 'lucide-react'; // Added new icons
 import { useNavigate, Link } from 'react-router-dom';
+import { getErrorMessage } from '../../services/api';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -18,16 +19,11 @@ const Login = () => {
 
     try {
       await loginUser(email, password);
-      // Optional: Add a small delay so user sees the success state before redirecting
-      setTimeout(() => navigate('/dashboard'), 500);
+      navigate('/dashboard');
       
-    } catch (err: any) {
-      console.log("Login Error Caught:", err); // 👈 Helpful for debugging
-  
-      // Check if 'err' is just a string (custom message) or an object
-      const errorMessage = typeof err === 'string' ? err : err.message;
-      
-      setError(errorMessage || "Invalid email or password");    } finally {
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Invalid email or password'));
+    } finally {
       setLoading(false);
     }
   };
