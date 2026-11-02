@@ -1,92 +1,99 @@
-# POS System
+# Frima Auto POS
 
-Frima Auto is a motorcycle spare-parts POS with a React/Vite frontend, Express
-API, PostgreSQL product and sales storage, and Supabase Auth for identity.
+Frima Auto is a point-of-sale and inventory app for a motorcycle spare-parts
+shop. Staff can look up products, complete sales, track customer credit and
+record payments to suppliers or other payees.
 
-## Local setup
+The app has a React and TypeScript frontend, an Express API, PostgreSQL for
+products and financial records, and Supabase Auth for sign-in.
 
-1. Copy `frontend/.env.example` to `frontend/.env.local` and add the Supabase
-   publishable (or legacy anon) key from **Supabase Project Settings → API Keys**.
-   The Supabase project URL is already configured in the example.
-2. Copy `backend/.env.example` to `backend/.env` and set the same Supabase URL/key
-   plus the PostgreSQL connection values. Do not use a Supabase `service_role`
-   key in either application.
-3. Start PostgreSQL using the project's compose file or your configured database.
-   The local compose password is for development only.
-4. In `backend`, run `npm install`, `npm run db:migrate`, `npm run build`, and
-   `npm start` (or `npm run dev`).
-5. In `frontend`, run `npm install` and `npm run dev`.
+## What it does
 
-The frontend defaults to `http://localhost:10000/api`; set `VITE_BACKEND_URL` for
-another API host. Configure `CORS_ORIGINS` with exact frontend origins for
-deployment. Vercel preview domains must be explicitly listed; wildcard Vercel
-origins are intentionally not allowed.
+- Search and filter products, check stock, and manage the catalog.
+- Record paid sales or sales on credit. A completed sale updates stock in the
+  same database transaction.
+- Review sales totals and recent transactions on the dashboard.
+- Track outstanding customer balances and supplier or other payables.
+- Export account balances as CSV.
 
-## Authentication and business access
+The payment method selected at checkout is recorded for bookkeeping; the app
+does not initiate mobile-money, card, or bank payments. Sale totals are the
+sum of item prices and quantities. The app does not add VAT.
 
-Supabase Auth issues the browser session. The frontend sends its access token to
-Express as a bearer token. Express validates it with Supabase Auth and reads the
-business assignment only from the user's trusted `app_metadata`; it never trusts
-client-supplied business IDs or editable `user_metadata`.
+## Run locally
 
-The signup flow requests a confirmation redirect to the current app origin at
-`/login`. In Supabase **Authentication → URL Configuration**, add
-`http://localhost:5173/login` to the redirect URL allow list for local development.
-Add the deployed frontend's login URL there as well for production. Confirmation
-emails can only redirect to URLs allowed by the Supabase project.
+You need Node.js, npm, and PostgreSQL. Docker Compose is also available for
+local PostgreSQL.
 
-Before a Supabase Auth user can use product endpoints, an administrator must
-assign a positive integer `business_id` in that user's `app_metadata`. An optional
-`role` string can also be set there. Newly self-registered accounts do not receive
-business access automatically. This avoids assigning users to a hard-coded
-business. Existing passwords in the legacy PostgreSQL `users` table are not
-automatically migrated; users need Supabase Auth accounts and password setup/reset.
+1. Copy `frontend/.env.example` to `frontend/.env.local`.
+2. Copy `backend/.env.example` to `backend/.env`.
+3. Fill in the Supabase and database settings in those files. Use the Supabase
+   publishable/anon key; never put a `service_role` key in the frontend or
+   backend environment.
+4. Start a local database with `docker compose up -d`, or use your own
+   PostgreSQL instance.
+5. In `backend`, install dependencies and prepare the database:
 
-## API behavior
+   ```sh
+   npm install
+   npm run db:migrate
+   npm run build
+   npm start
+   ```
 
-- `GET /health` checks PostgreSQL connectivity.
-- `/api/products` requires a valid Supabase access token and a trusted business
-  assignment.
-- `GET /api/products` supports `page`, `limit` (maximum 100), `search`, `category`,
-  and `stockStatus=low|out`; it returns `{ data, page, limit, total, totalPages }`.
-- Product create/update input is validated; product reads, updates, and deletes
-  are scoped to the authenticated business.
-- `POST /api/sales` records paid or credit sales, stores item/price snapshots,
-  and deducts stock in one database transaction. Checkout requires an
-  `Idempotency-Key` UUID so retrying the same request cannot charge stock twice.
-  Payable creation and account payments also use idempotency keys to prevent
-  duplicate records when a request is retried.
-- `GET /api/sales/analytics?period=today|7days|30days|90days` returns sales
-  totals and the latest transactions for the dashboard.
-- `/api/accounts` lists open customer receivables and supplier/other payables.
-  Payments are recorded separately and cannot exceed the remaining balance.
-- `GET /api/accounts/export.csv?type=receivables|payables` downloads open
-  account balances as a UTF-8 CSV that can be opened in Excel or imported into
-  Google Sheets. PostgreSQL remains the source of truth; Google OAuth is not
-  required for the CSV export.
-- Errors use `{ error: { code, message, details? } }`.
+   For development, run `npm run dev` instead of `npm start`.
 
-## Sales and account records
+6. In another terminal, install frontend dependencies and start Vite:
 
-- Run `npm run db:migrate` from `backend` before using sales or accounts. This
-  applies the versioned sales/account tables and indexes.
-- In the POS, selecting **Paid** records the cashier-confirmed payment method;
-  it does not contact a payment provider. Selecting **On credit** requires a
-  customer name and adds the sale to open receivables. Customer payments and
-  supplier/other-payee payments can be recorded from **Customers & Accounts**.
-- POS totals equal the sum of item prices and quantities; the app does not add
-  VAT or another tax. The current payment-method selection records how a sale
-  was paid but does not integrate with a mobile-money provider or calculate
-  provider fees/taxes.
-- Supplier payables are entered manually and do not yet create a stock receipt.
-- Full Google Sheets synchronization is not configured. CSV export can be
-  opened in spreadsheet software; direct Google sync would require Google
-  Cloud OAuth credentials and setup.
-- Confirm the deployed PostgreSQL schema and review migrations before applying
-  them to production. The finance migration creates new tables; it does not
-  modify the existing products table.
-- Add integration tests for Supabase token validation, business isolation,
-  concurrent stock changes, and checkout/payment transactions against a
-  disposable PostgreSQL database.
-- Review `npm audit` findings and upgrade dependencies with focused compatibility
-  checks; do not apply force upgrades blindly.
+   ```sh
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+The frontend runs at `http://localhost:5173` and uses
+`http://localhost:10000/api` by default. Set `VITE_BACKEND_URL` if the API is
+running at a different address.
+
+## Supabase user access
+
+Supabase handles sign-in. The API checks the user's access token and reads their
+business assignment from Supabase `app_metadata`. A new account needs an
+administrator to assign a positive integer `business_id` before it can access
+the business's products or sales. The API does not accept a business ID from
+the browser.
+
+Add the local login URL, `http://localhost:5173/login`, to the Supabase
+Authentication redirect allow list. Add the deployed login URL there as well.
+The backend's `CORS_ORIGINS` setting must contain the exact frontend origin;
+preview domains are not allowed automatically.
+
+## Deployments
+
+The frontend is a Vite app and can be deployed to Vercel. Configure its
+`VITE_BACKEND_URL` to point to the deployed API.
+
+The Express API can be deployed to Render. Set its environment variables from
+`backend/.env.example` in the Render dashboard, including PostgreSQL
+credentials, Supabase settings, and the allowed frontend origins. Keep
+credentials in the hosting provider's environment settings, not in Git.
+
+After changing the database schema, run `npm run db:migrate` from `backend`
+against the intended database. Check the migration and database target before
+running it in production.
+
+## Checks
+
+Run the backend build and request-validation tests from `backend`:
+
+```sh
+npm run build
+npm test
+```
+
+Run the frontend build and lint checks from `frontend`:
+
+```sh
+npm run build
+npm run lint
+```
