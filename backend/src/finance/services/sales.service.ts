@@ -4,8 +4,6 @@ import { AppError } from '../../errors/app-error';
 import { pool, query } from '../../postgres.client';
 import type { CreateSaleInput } from '../validators/finance.validator';
 
-const TAX_RATE = 0.16;
-
 const toCents = (amount: number | string): number => Math.round(Number(amount) * 100);
 const fromCents = (amount: number): string => (amount / 100).toFixed(2);
 
@@ -107,8 +105,8 @@ const completeSale = async (
     };
   });
   const subtotalCents = pricedItems.reduce((sum, item) => sum + item.lineTotalCents, 0);
-  const taxCents = Math.round(subtotalCents * TAX_RATE);
-  const totalCents = subtotalCents + taxCents;
+  const taxCents = 0;
+  const totalCents = subtotalCents;
   if (!Number.isSafeInteger(totalCents) || totalCents > 999_999_999_999) {
     throw new AppError(400, 'SALE_TOTAL_TOO_LARGE', 'Sale total exceeds the supported amount');
   }

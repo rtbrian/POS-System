@@ -44,6 +44,16 @@ describe('finance request schemas', () => {
     }).success, false);
   });
 
+  it('coerces numeric-string product IDs to numbers for sale items', () => {
+    const sale = createSaleSchema.parse({
+      paymentType: 'paid',
+      paymentMethod: 'cash',
+      items: [{ productId: '42', quantity: 1 }],
+    });
+
+    assert.equal(sale.items[0].productId, 42);
+  });
+
   it('validates payable amounts and requires a payment method for partial payment', () => {
     assert.equal(createPayableSchema.safeParse({
       payeeName: 'Parts supplier',

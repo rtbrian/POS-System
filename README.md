@@ -74,8 +74,10 @@ automatically migrated; users need Supabase Auth accounts and password setup/res
   it does not contact a payment provider. Selecting **On credit** requires a
   customer name and adds the sale to open receivables. Customer payments and
   supplier/other-payee payments can be recorded from **Customers & Accounts**.
-- The existing POS tax calculation is retained at 16%. Confirm the correct tax
-  rate for the business before using totals for tax reporting.
+- POS totals equal the sum of item prices and quantities; the app does not add
+  VAT or another tax. The current payment-method selection records how a sale
+  was paid but does not integrate with a mobile-money provider or calculate
+  provider fees/taxes.
 - Supplier payables are entered manually and do not yet create a stock receipt.
 - Full Google Sheets synchronization is not configured. CSV export can be
   opened in spreadsheet software; direct Google sync would require Google

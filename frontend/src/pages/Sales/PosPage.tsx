@@ -91,8 +91,7 @@ const POS = () => {
 
   // 6. Calculate Totals
   const subtotal = cart.reduce((sum, item) => sum + (Number(item.price) * item.qty), 0);
-  const tax = subtotal * 0.16; // Example 16% VAT
-  const total = subtotal + tax;
+  const total = subtotal;
 
   const handleCompleteSale = async () => {
     setSaleError('');
@@ -368,10 +367,6 @@ const POS = () => {
             <div className="flex justify-between text-gray-600">
               <span>Subtotal</span>
               <span>KES {subtotal.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between text-gray-600">
-              <span>Tax (16%)</span>
-              <span>KES {tax.toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center pt-3 border-t border-gray-200 mt-2">
               <span className="font-bold text-gray-800 text-lg">Total Payable</span>

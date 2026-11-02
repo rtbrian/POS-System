@@ -18,7 +18,7 @@ export const createSaleSchema = z.object({
   paymentType: z.enum(['paid', 'credit']),
   paymentMethod: paymentMethodSchema.optional(),
   items: z.array(z.object({
-    productId: z.number().int().positive(),
+    productId: z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER),
     quantity: z.number().int().positive().max(100_000),
   }).strict()).min(1).max(100),
 }).strict().superRefine((sale, context) => {
