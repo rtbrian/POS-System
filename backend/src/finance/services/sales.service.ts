@@ -8,7 +8,7 @@ const toCents = (amount: number | string): number => Math.round(Number(amount) *
 const fromCents = (amount: number): string => (amount / 100).toFixed(2);
 
 interface ProductRow {
-  id: number;
+  id: string;
   name: string;
   price: string;
   stock_quantity: number;
@@ -69,7 +69,7 @@ const completeSale = async (
 
   const orderedItems = [...sale.items].sort((a, b) => a.productId - b.productId);
   const productResult = await client.query<ProductRow>(
-    `SELECT id, name, price, stock_quantity
+    `SELECT id::text AS id, name, price, stock_quantity
      FROM products
      WHERE id = ANY($1) AND business_id = $2
      ORDER BY id
@@ -78,18 +78,17 @@ const completeSale = async (
   );
   const products = new Map(productResult.rows.map((product) => [product.id, product]));
   for (const item of orderedItems) {
-    const product = products.get(item.productId);
+    const product = products.get(String(item.productId));
     if (!product) {
       throw new AppError(404, 'PRODUCT_NOT_FOUND', `Product ${item.productId} was not found`);
     }
     if (product.stock_quantity < item.quantity) {
       throw new AppError(409, 'INSUFFICIENT_STOCK', `Not enough stock for ${product.name}`);
     }
-    products.set(item.productId, product);
   }
 
   const pricedItems = sale.items.map((item) => {
-    const product = products.get(item.productId);
+    const product = products.get(String(item.productId));
     if (!product) {
       throw new AppError(500, 'SALE_PRODUCT_LOOKUP_FAILED', 'Could not load a sale product');
     }
