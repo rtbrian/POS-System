@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import dotenv from 'dotenv';
 import { Pool, QueryResult, QueryResultRow } from 'pg';
 
@@ -25,8 +26,17 @@ export const pool = new Pool({
   max: 10,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 5_000,
-  ...(process.env.DB_SSL === 'true' ? { ssl: { rejectUnauthorized: true } } : {}),
-});
+...(process.env.DB_SSL === 'true'
+  ? {
+      ssl: {
+        ca: process.env.DB_SSL_CA?.replace(/\\n/g, '\n')
+          ?? (process.env.DB_SSL_CA_PATH
+            ? readFileSync(process.env.DB_SSL_CA_PATH, 'utf8')
+            : undefined),
+        rejectUnauthorized: true,
+      },
+    }
+  : {}),});
 
 pool.on('error', (error) => {
   console.error('Unexpected PostgreSQL pool error:', error);
