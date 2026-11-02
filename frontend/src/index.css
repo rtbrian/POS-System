@@ -2,4 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* You can keep your other custom styles below here if you have any */
+@layer base {
+  html {
+    @apply font-sans;
+  }
+
+  body {
+    @apply min-h-screen bg-slate-50 text-slate-900 antialiased;
+  }
+}

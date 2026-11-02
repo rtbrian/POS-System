@@ -1,0 +1,654 @@
+POS SYSTEM - DEVELOPMENT LOG
+============================
+
+Purpose
+-------
+This file documents the POS System from the first cloned repository state through
+local development, testing, hardening, deployment, and launch. Add a dated entry
+every time a decision, command, fix, test, or deployment action is made.
+
+Project
+-------
+Repository: rtbrian/POS-System
+Local path: C:\Users\user\Downloads\POS-System
+Current branch: master
+Application: React + Vite frontend, Express + TypeScript backend, PostgreSQL database
+
+
+PART 1 - WHAT HAS BEEN DONE
+===========================
+
+1. Cloned repository inspected
+------------------------------
+Observed structure:
+- frontend: React/Vite application
+- backend: Express/TypeScript application
+- docker-compose.yml: PostgreSQL and Redis services
+- no root package.json
+- no database migration/schema directory found
+- no committed .env.example found
+
+2. Frontend scripts inspected
+------------------------------
+File: frontend/package.json
+- dev: vite
+- build: tsc -b && vite build
+- lint: eslint .
+- preview: vite preview
+
+3. Backend scripts inspected
+----------------------------
+File: backend/package.json
+- build: tsc
+- start: node dist/src/index.js
+- dev script originally referenced src/index.js even though the source is TypeScript
+
+4. Initial Node.js problem identified
+-------------------------------------
+The first terminal could not resolve node or npm because Node.js was not on PATH.
+
+Action taken:
+- Checked common installation locations.
+- Confirmed Node.js was not initially available to the shell.
+- Installed Node.js LTS using winget.
+
+Installed versions observed:
+- Node.js: v24.19.0
+- npm: 11.17.0
+
+5. PowerShell execution policy problem identified
+--------------------------------------------------
+PowerShell selected C:\Program Files\nodejs\npm.ps1 and blocked it because
+running scripts is disabled.
+
+Working command pattern:
+- Use npm.cmd instead of npm in PowerShell.
+- Example:
+  npm.cmd install
+  npm.cmd run dev
+
+No system execution-policy change was required.
+
+6. Frontend dependencies installed
+-----------------------------------
+Fresh frontend dependency installation was attempted after removing partial
+installation artifacts. The successful install used npm.cmd and installed the
+packages from frontend/package.json.
+
+Important warning observed:
+- npm reported that esbuild has an install script pending approval.
+- Review with npm approve-scripts if esbuild ever fails to install correctly.
+
+7. Accidental root artifacts removed
+------------------------------------
+The following untracked root-level artifacts were confirmed as empty or accidental
+shell/npm artifacts and removed:
+- $env
+- cd
+- npm
+- root package-lock.json
+
+Preserved required files:
+- docker-compose.yml
+- frontend/package-lock.json
+- frontend TypeScript/Vite/Tailwind/PostCSS/ESLint/Vercel configuration
+
+8. React Router dependency mismatch fixed
+------------------------------------------
+Symptom:
+TypeScript reported that react-router-dom had no exports for:
+- BrowserRouter
+- Routes
+- Route
+- Navigate
+- Link
+- useNavigate
+
+Cause:
+The fresh installation resolved React Router v7 while the application code uses
+the React Router v6 API.
+
+Action taken:
+- Changed frontend/package.json from react-router-dom ^7.11.0 to ^6.30.1.
+- Regenerated frontend/package-lock.json.
+
+Verification:
+- npm.cmd run build completed successfully.
+
+9. Frontend started
+--------------------
+Frontend command:
+- cd frontend
+- npm.cmd run dev -- --host 127.0.0.1
+
+Frontend URL:
+- http://127.0.0.1:5173/
+
+The root route redirects to:
+- http://127.0.0.1:5173/login
+
+10. Registration failure traced
+-------------------------------
+Initial browser error:
+- POST http://localhost:10000/api/auth/register
+- ERR_CONNECTION_REFUSED
+
+Cause:
+The backend API was not running.
+
+Action taken:
+- Installed backend dependencies.
+- Built backend with npm.cmd run build.
+- Started backend with npm.cmd start.
+
+Backend URL:
+- http://localhost:10000
+
+11. CORS failure traced and fixed
+---------------------------------
+After the backend started, registration from the Vite URL failed with:
+- CORS blocked origin http://127.0.0.1:5173
+
+Cause:
+backend/src/index.ts allowed origins beginning with http://localhost but not
+http://127.0.0.1.
+
+Action taken:
+- Added http://127.0.0.1 to the local CORS allowlist.
+- Rebuilt the backend.
+- Restarted the backend.
+
+12. PostgreSQL connection failure traced
+-----------------------------------------
+After CORS was fixed, registration reached the backend but returned HTTP 500.
+Backend log:
+- ECONNREFUSED 127.0.0.1:5432
+- ECONNREFUSED ::1:5432
+
+Cause:
+PostgreSQL was not running.
+
+Action taken:
+- Searched for PostgreSQL with winget.
+- Started installing PostgreSQL 17 through winget.
+
+At the last recorded check:
+- Installer download was approximately 38 MB of 355 MB.
+- PostgreSQL service had not yet been created.
+
+
+PART 2 - CONFIRMED INCONSISTENCIES TO LEARN FROM
+=================================================
+
+A. Frontend and backend error response mismatch
+------------------------------------------------
+Backend commonly returns { error: '...' }.
+Register.tsx reads response.data.message.
+
+Result:
+The user often sees the generic message Registration failed instead of the real
+validation or server error.
+
+Fix to plan:
+Choose one error contract, preferably:
+{ error: { code: 'VALIDATION_ERROR', message: '...' } }
+Update every controller and frontend service to use it consistently.
+
+B. Database schema is not versioned
+------------------------------------
+No migrations or schema file was found.
+The backend assumes users and products tables exist with specific columns.
+
+Fix to plan:
+Add database/migrations with numbered SQL migrations and a repeatable local setup.
+Document how to create, migrate, seed, reset, and back up the database.
+
+C. User model and SQL names disagree
+-------------------------------------
+backend/src/auth_services/models/user.model.ts expects:
+- password_hash
+- role_id
+- business_id
+
+backend/src/auth_services/services/auth.service.ts inserts:
+- password
+- role
+
+JWT generation reads role_id and business_id.
+
+Fix to plan:
+Design the schema first, then make TypeScript interfaces, SQL queries, JWT claims,
+and frontend types use the same names. Do not guess column names in code.
+
+D. Database environment configuration is undocumented
+-------------------------------------------------------
+The backend reads DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT, and JWT_SECRET,
+but no committed .env.example was found.
+
+docker-compose.yml defines local database values:
+- user: postgres
+- password: 12345
+- database: pos_system
+- port: 5432
+
+Fix to plan:
+Add backend/.env.example with placeholders and a documented local .env setup.
+Never commit the real .env or production secrets.
+
+E. Inventory routes are not protected
+--------------------------------------
+backend/src/inventory-service/routes/products.routes.ts exposes GET, POST, PUT,
+and DELETE without verifyToken.
+
+Result:
+Unauthenticated users can potentially read and modify inventory.
+
+Fix to plan:
+Protect all product routes with authentication middleware and authorize each
+operation using the authenticated user and business membership.
+
+F. Business isolation is not implemented
+------------------------------------------
+Product creation hardcodes business_id: 1.
+Product queries do not filter by the authenticated business.
+
+Result:
+Users from different businesses could see or change each other's products.
+
+Fix to plan:
+Put businessId in the verified token, obtain it from req.user, and include it in
+every SELECT, INSERT, UPDATE, and DELETE condition.
+
+G. Authentication is not enforced in frontend routes
+-----------------------------------------------------
+App.tsx defines dashboard, inventory, and POS routes without a protected route.
+
+Result:
+A user can navigate directly to private pages even without a token. Backend
+protection must remain authoritative, but the frontend should also redirect for
+a better user experience.
+
+Fix to plan:
+Add a ProtectedRoute component that checks token state and redirects to /login.
+Also handle token expiry and logout globally.
+
+H. Token lifetime and storage need a production decision
+---------------------------------------------------------
+JWT expires after 20 minutes and is stored in localStorage.
+
+Risks:
+- localStorage is exposed to JavaScript if an XSS vulnerability occurs.
+- no refresh-token flow is implemented.
+- the frontend does not visibly handle expiration.
+
+Fix to plan:
+For a production web app, evaluate short-lived access tokens plus secure,
+httpOnly, sameSite refresh cookies. Add logout, rotation, expiry handling, and
+revocation strategy.
+
+I. Validation is incomplete and inconsistent
+---------------------------------------------
+Registration validates email format and password length, but product input
+validation is only basic truthiness checking.
+
+Fix to plan:
+Use a shared validation library such as Zod on the backend. Validate numeric
+ranges, non-negative stock, valid prices, string lengths, and allowed categories.
+Return structured 400 responses.
+
+J. Inventory API silently hides failures
+-----------------------------------------
+frontend/src/services/inventoryservice.ts returns [] from getProducts on any error.
+
+Result:
+The UI can display an empty inventory as if the business has no products, even
+when the backend is down or access is denied.
+
+Fix to plan:
+Show a meaningful error state and preserve the distinction between an empty list,
+401, 403, 404, and 500 responses.
+
+K. Product update behavior is unsafe for nullable values
+---------------------------------------------------------
+The backend uses COALESCE for updates. This makes it impossible to intentionally
+clear nullable category or description fields by sending null.
+
+Fix to plan:
+Use an explicit update DTO and decide whether omitted, null, and empty string have
+different meanings.
+
+L. Product ownership and delete behavior need verification
+-----------------------------------------------------------
+DELETE returns success without checking whether a row was actually deleted.
+
+Fix to plan:
+Use a business_id condition, check affected row count, and return 404 when the
+product does not belong to the current business or does not exist.
+
+M. Duplicate server entrypoints create confusion
+-------------------------------------------------
+There are separate auth_services/server.ts and inventory-service/server.ts files,
+while backend/src/index.ts acts as a combined gateway. They use different ports and
+CORS settings.
+
+Fix to plan:
+Choose one architecture for the first launch:
+- one API process with clear route modules, or
+- separately deployed services with explicit service boundaries.
+For this first app, one API process is simpler and safer.
+
+N. Production CORS is too broad and incomplete
+-----------------------------------------------
+The gateway allows any origin ending in .vercel.app.
+
+Risks:
+- unrelated preview deployments may call the API.
+- the exact production frontend origin is not explicitly controlled.
+
+Fix to plan:
+Use an environment variable containing an exact comma-separated allowlist of
+trusted origins. Keep localhost origins in development only.
+
+O. HTTPS and proxy behavior are not addressed
+----------------------------------------------
+The current local setup uses HTTP and has no production reverse-proxy/security
+configuration documented.
+
+Fix to plan:
+Deploy behind HTTPS, configure secure cookies if used, set trust proxy correctly,
+and add helmet, rate limiting, request size limits, and secure headers.
+
+P. No automated API or database tests are present
+--------------------------------------------------
+The repository currently has no visible test suite covering registration, login,
+protected inventory, validation, or business isolation.
+
+Fix to plan:
+Add unit tests for services and integration tests for API routes using a test
+database or isolated database container. Add frontend tests for form states and
+API error handling.
+
+
+PART 3 - STAGED PATH TO A COMPLETE APPLICATION
+==============================================
+
+Stage 0 - Finish local prerequisites
+------------------------------------
+[ ] Finish PostgreSQL installation.
+[ ] Confirm PostgreSQL service is running on port 5432.
+[ ] Confirm backend .env values match the local database.
+[ ] Create the pos_system database if the installer did not create it.
+[ ] Create the schema with migrations.
+[ ] Seed an initial business, role, user, and sample products.
+[ ] Start backend on port 10000.
+[ ] Start frontend on port 5173.
+
+Stage 1 - Define the data model
+-------------------------------
+Design and document:
+- businesses
+- users
+- roles or role assignments
+- products
+- sales/orders
+- sale_items/order_items
+- payments
+- audit events
+
+Define primary keys, foreign keys, unique constraints, indexes, timestamps, and
+soft-delete policy before adding more features.
+
+Stage 2 - Establish API contracts
+----------------------------------
+Document each endpoint with request and response examples.
+Recommended first contracts:
+- POST /api/auth/register
+- POST /api/auth/login
+- GET /api/auth/me
+- GET /api/products
+- POST /api/products
+- PUT /api/products/:id
+- DELETE /api/products/:id
+
+Use one response shape for success and one for errors. Generate or maintain
+frontend TypeScript types from the same contract where practical.
+
+Stage 3 - Repair authentication and authorization
+--------------------------------------------------
+[ ] Hash passwords with bcrypt or argon2.
+[ ] Normalize emails before lookup and insert.
+[ ] Decide whether public registration is allowed in production.
+[ ] Protect private API routes.
+[ ] Authorize by business membership and role.
+[ ] Validate JWT algorithm, issuer, audience, and expiry.
+[ ] Add refresh/logout strategy.
+[ ] Protect frontend routes.
+
+Stage 4 - Make inventory safe and dynamic
+------------------------------------------
+[ ] Remove business_id hardcoding.
+[ ] Filter every query by authenticated business.
+[ ] Validate product fields with a schema.
+[ ] Add pagination, sorting, and search at API level.
+[ ] Return 404 for missing records.
+[ ] Prevent negative stock.
+[ ] Add transaction-safe stock updates.
+[ ] Add audit records for changes.
+
+Stage 5 - Implement sales correctly
+------------------------------------
+[ ] Create a sale transaction endpoint.
+[ ] Re-check product prices and stock on the server.
+[ ] Use a database transaction for sale plus line items plus stock deduction.
+[ ] Prevent overselling with row locks or an atomic update.
+[ ] Store the final sale price, not only the current product price.
+[ ] Add payment status and receipt data.
+[ ] Add cancellation/refund rules.
+
+Stage 6 - Testing
+-----------------
+Backend tests:
+- registration validation
+- duplicate email
+- password hashing
+- login success/failure
+- expired/invalid token
+- protected product routes
+- cross-business access rejection
+- product validation
+- sale transaction rollback
+
+Frontend tests:
+- login and register loading states
+- useful API error messages
+- protected route redirect
+- inventory empty/error/loading states
+- cart quantity and stock behavior
+
+Run before every push:
+- npm.cmd run build in frontend
+- npm.cmd run lint in frontend
+- npm.cmd run build in backend
+- backend test command
+- frontend test command
+
+Stage 7 - Operational readiness
+--------------------------------
+[ ] Add structured logging without passwords or tokens.
+[ ] Add request IDs and health endpoints.
+[ ] Add /health and /ready endpoints.
+[ ] Add graceful shutdown for HTTP server and database pool.
+[ ] Add rate limiting to auth endpoints.
+[ ] Add helmet and body-size limits.
+[ ] Add database backups and restore testing.
+[ ] Add dependency update process.
+[ ] Add error monitoring.
+
+Stage 8 - Deployment
+--------------------
+Recommended simple first production shape:
+- Managed PostgreSQL provider
+- One Node/Express API deployment
+- One Vercel frontend deployment
+- Environment variables configured in each platform
+
+Production variables to define:
+Backend:
+- NODE_ENV=production
+- PORT
+- DB_HOST
+- DB_PORT
+- DB_USER
+- DB_PASSWORD
+- DB_NAME
+- JWT_SECRET
+- CORS_ORIGINS
+Frontend:
+- VITE_BACKEND_URL=https://your-api-domain.example/api
+
+Deployment sequence:
+1. Provision managed PostgreSQL.
+2. Run migrations against production database.
+3. Seed only required administrative data.
+4. Deploy backend.
+5. Verify /health and database readiness.
+6. Configure exact frontend origin in backend CORS.
+7. Deploy frontend.
+8. Test registration policy, login, inventory, and a complete sale.
+9. Check logs, error monitoring, backups, and rollback procedure.
+10. Tag the release and record the deployed commit.
+
+Stage 9 - Launch checklist
+---------------------------
+Security:
+[ ] HTTPS works everywhere.
+[ ] No secrets are committed.
+[ ] Production CORS is exact.
+[ ] Auth and business authorization are tested.
+[ ] Rate limits are enabled.
+[ ] SQL uses parameterized queries.
+[ ] Passwords and tokens never appear in logs.
+
+Reliability:
+[ ] Migrations are repeatable.
+[ ] Backups are automated.
+[ ] Restore was tested.
+[ ] Health checks work.
+[ ] Errors are monitored.
+[ ] Rollback steps are documented.
+
+Product behavior:
+[ ] Registration/login behavior is intentional.
+[ ] Inventory CRUD works for authorized users.
+[ ] Sales cannot oversell stock.
+[ ] Receipts contain final prices and totals.
+[ ] Empty/loading/error states are understandable.
+[ ] Mobile and desktop layouts are checked.
+
+
+PART 4 - COMMAND LOG
+====================
+
+Commands used successfully or recommended during this work:
+
+Node installation:
+winget install --id OpenJS.NodeJS.LTS --exact --accept-source-agreements --accept-package-agreements
+
+Frontend install:
+cd C:\Users\user\Downloads\POS-System\frontend
+npm.cmd install
+
+Frontend development:
+npm.cmd run dev -- --host 127.0.0.1
+
+Frontend build:
+npm.cmd run build
+
+Backend install:
+cd C:\Users\user\Downloads\POS-System\backend
+npm.cmd install
+
+Backend build:
+npm.cmd run build
+
+Backend start:
+npm.cmd start
+
+PostgreSQL Docker alternative:
+cd C:\Users\user\Downloads\POS-System
+docker compose up -d postgres
+
+Check ports:
+Get-NetTCPConnection -LocalPort 5173,10000,5432 -State Listen
+
+Check PostgreSQL service:
+Get-Service postgresql*
+
+
+PART 5 - DAILY ENTRY TEMPLATE
+=============================
+
+Date:
+
+Goal:
+
+What I changed:
+- 
+
+Why I changed it:
+- 
+
+Commands run:
+- 
+
+Result:
+- [ ] Passed
+- [ ] Failed
+- [ ] Blocked
+
+Errors observed:
+- 
+
+Root cause:
+- 
+
+Fix:
+- 
+
+Files changed:
+- 
+
+Tests run:
+- 
+
+What I learned:
+- 
+
+Next step:
+- 
+
+
+CURRENT STATUS
+==============
+
+Working:
+- Node.js and npm are installed.
+- Frontend dependencies are installed.
+- Backend dependencies are installed.
+- Frontend build passes.
+- Backend TypeScript build passes.
+- Frontend Vite server runs on http://127.0.0.1:5173.
+- Backend runs on http://localhost:10000.
+- Local CORS supports http://127.0.0.1:5173.
+- React Router is aligned to the v6 APIs used by the source.
+
+Blocked or pending:
+- PostgreSQL installation/download must finish.
+- PostgreSQL service must be started.
+- Database schema and migrations must be created.
+- Backend environment variables must be configured.
+- Registration must be retested after database setup.
+- Authentication and inventory authorization still need hardening.
+- Automated tests and production deployment are not yet complete.
+
+Last updated: 2026-08-25

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { loginUser } from '../../services/authservice';
 import { Lock, Mail, Eye, EyeOff, Store, Loader2 } from 'lucide-react'; // Added new icons
 import { useNavigate, Link } from 'react-router-dom';
+import { getErrorMessage } from '../../services/api';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -18,16 +19,11 @@ const Login = () => {
 
     try {
       await loginUser(email, password);
-      // Optional: Add a small delay so user sees the success state before redirecting
-      setTimeout(() => navigate('/dashboard'), 500);
+      navigate('/dashboard');
       
-    } catch (err: any) {
-      console.log("Login Error Caught:", err); // 👈 Helpful for debugging
-  
-      // Check if 'err' is just a string (custom message) or an object
-      const errorMessage = typeof err === 'string' ? err : err.message;
-      
-      setError(errorMessage || "Invalid email or password");    } finally {
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Invalid email or password'));
+    } finally {
       setLoading(false);
     }
   };
@@ -36,18 +32,18 @@ const Login = () => {
     <div className="min-h-screen flex w-full bg-gray-50">
       
       {/* 🟢 LEFT SIDE: Branding (Hidden on mobile, visible on Tablet/Desktop) */}
-      <div className="hidden md:flex w-1/2 bg-blue-700 items-center justify-center relative overflow-hidden">
+      <div className="hidden md:flex w-1/2 bg-red-800 items-center justify-center relative overflow-hidden">
         {/* Background Pattern */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-indigo-900 opacity-90" />
+        <div className="absolute inset-0 bg-gradient-to-br from-red-700 to-slate-950 opacity-95" />
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-white opacity-10 rounded-full blur-3xl" />
         
         <div className="relative z-10 text-white text-center p-12">
           <div className="bg-white/20 p-4 rounded-2xl inline-block mb-6 backdrop-blur-sm">
             <Store size={64} className="text-white" />
           </div>
-          <h1 className="text-5xl font-bold mb-4 tracking-tight">B.M.Tech POS</h1>
-          <p className="text-blue-100 text-xl max-w-md mx-auto font-light">
-            Secure, fast, and reliable point of sale management for your business.
+          <h1 className="text-5xl font-bold mb-4 tracking-tight">Frima Auto</h1>
+          <p className="text-red-100 text-xl max-w-md mx-auto font-light">
+            Your sales and inventory, ready to move.
           </p>
         </div>
       </div>
@@ -80,13 +76,13 @@ const Login = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                  <Mail className="h-5 w-5 text-gray-400 group-focus-within:text-red-600 transition-colors" />
                 </div>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all outline-none"
                   placeholder="admin@pos.com"
                   required
                 />
@@ -100,13 +96,13 @@ const Login = () => {
               </div>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                  <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-red-600 transition-colors" />
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                  className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all outline-none"
                   placeholder="••••••"
                   required
                 />
@@ -126,8 +122,8 @@ const Login = () => {
               type="submit"
               disabled={loading}
               className={`w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white 
-                ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 transform hover:-translate-y-0.5'} 
-                transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                ${loading ? 'bg-red-400 cursor-not-allowed' : 'bg-red-700 hover:bg-red-800 transform hover:-translate-y-0.5'}
+                transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600`}
             >
               {loading ? (
                 <>
@@ -144,13 +140,13 @@ const Login = () => {
             Don't have an account?{' '}
               <Link 
               to="/register" 
-              className="text-blue-600 font-semibold hover:underline">
+              className="text-red-700 font-semibold hover:underline">
               Sign Up
               </Link>
             </p>
           </div>
           <p className="text-center text-sm text-gray-400 mt-6">
-            © 2026 B.M.Tech POS Systems
+            © 2026 Frima Auto
           </p>
         </div>
       </div>

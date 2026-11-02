@@ -1,79 +1,47 @@
 import { Request, Response } from 'express';
+import { AppError } from '../../errors/app-error';
 import { ProductService } from '../services/product.services';
+import {
+  createProductSchema,
+  productFiltersSchema,
+  productIdSchema,
+  updateProductSchema,
+} from '../validators/product.validator';
 
-// 1. GET ALL PRODUCTS
-export const getProducts = async (req: Request, res: Response) => {
-  try {
-    const products = await ProductService.getAllProducts();
-    res.json(products);
-  } catch (error) {
-    console.error("Error fetching products:", error);
-    res.status(500).json({ message: 'Internal Server Error' });
+const requireBusiness = (req: Request): number => {
+  if (!req.user) {
+    throw new AppError(401, 'UNAUTHORIZED', 'Authentication is required');
   }
+  return req.user.businessId;
 };
 
-// 2. CREATE PRODUCT
-export const createProduct = async (req: Request, res: Response) => {
-  try {
-    const { name, price, stock, category, description } = req.body;
-
-    // Basic Validation
-    if (!name || !price || stock === undefined) {
-      return res.status(400).json({ message: 'Name, Price, and Stock are required' });
-    }
-
-    const newProduct = await ProductService.createProduct({
-      name,
-      price,
-      stock,
-      category,
-      description,
-      business_id: 1 // Default to 1
-    });
-
-    res.status(201).json(newProduct);
-  } catch (error) {
-    console.error("Error creating product:", error);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
+export const getProducts = async (req: Request, res: Response): Promise<void> => {
+  const filters = productFiltersSchema.parse(req.query);
+  const products = await ProductService.getAllProducts(requireBusiness(req), filters);
+  res.json(products);
 };
 
-// 3. DELETE PRODUCT (New!)
-export const deleteProduct = async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id as string);
-    
-    if (isNaN(id)) {
-      return res.status(400).json({ message: 'Invalid ID format' });
-    }
-
-    await ProductService.deleteProduct(id);
-    res.json({ message: 'Product deleted successfully' });
-  } catch (error) {
-    console.error("Error deleting product:", error);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
+export const createProduct = async (req: Request, res: Response): Promise<void> => {
+  const product = createProductSchema.parse(req.body);
+  const created = await ProductService.createProduct(requireBusiness(req), product);
+  res.status(201).json(created);
 };
 
-// 4. UPDATE PRODUCT (New!)
-export const updateProduct = async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id as string);
-    
-    if (isNaN(id)) {
-      return res.status(400).json({ message: 'Invalid ID format' });
-    }
-
-    // Pass the entire body as updates (e.g. { stock: 45 })
-    const updatedProduct = await ProductService.updateProduct(id, req.body);
-    
-    if (!updatedProduct) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
-    res.json(updatedProduct);
-  } catch (error) {
-    console.error("Error updating product:", error);
-    res.status(500).json({ message: 'Internal Server Error' });
+export const deleteProduct = async (req: Request, res: Response): Promise<void> => {
+  const id = productIdSchema.parse(req.params.id);
+  const deleted = await ProductService.deleteProduct(id, requireBusiness(req));
+  if (!deleted) {
+    throw new AppError(404, 'PRODUCT_NOT_FOUND', 'Product not found');
   }
+  res.status(204).end();
+};
+
+export const updateProduct = async (req: Request, res: Response): Promise<void> => {
+  const id = productIdSchema.parse(req.params.id);
+  const updates = updateProductSchema.parse(req.body);
+  const updated = await ProductService.updateProduct(id, requireBusiness(req), updates);
+  if (!updated) {
+    throw new AppError(404, 'PRODUCT_NOT_FOUND', 'Product not found');
+  }
+  res.json(updated);
 };
