@@ -33,8 +33,8 @@ const Register = () => {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <div className="w-96 p-6 shadow-lg bg-white rounded-md">
+    <div className="flex min-h-dvh items-center justify-center bg-gray-100 p-4">
+      <div className="w-full max-w-sm rounded-md bg-white p-5 shadow-lg sm:p-6">
         <h2 className="text-2xl font-bold mb-4 text-center">Sign Up</h2>
         <p className="mb-4 text-center text-xs text-gray-500">
           New accounts need a business assignment from an administrator before they can access inventory.

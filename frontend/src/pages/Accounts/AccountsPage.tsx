@@ -101,8 +101,8 @@ const AccountsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4 md:px-8">
+    <div className="min-h-dvh bg-slate-50">
+      <header className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-4 sm:px-5 md:px-8">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -114,7 +114,7 @@ const AccountsPage = () => {
           </button>
           <div>
             <p className="text-sm font-bold text-red-700">Frima Auto</p>
-            <h1 className="text-xl font-bold text-slate-900">Customers & Accounts</h1>
+            <h1 className="text-lg font-bold text-slate-900 sm:text-xl">Customers & Accounts</h1>
           </div>
         </div>
         <button
@@ -127,7 +127,7 @@ const AccountsPage = () => {
         </button>
       </header>
 
-      <main className="mx-auto max-w-7xl p-5 md:p-8">
+      <main className="mx-auto max-w-7xl p-3 sm:p-5 md:p-8">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-2xl font-bold text-slate-900">Money owed</h2>
@@ -193,7 +193,7 @@ const AccountsPage = () => {
         )}
 
         {showPayableForm && type === 'payables' && (
-          <form onSubmit={(event) => void handleCreatePayable(event)} className="mb-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <form onSubmit={(event) => void handleCreatePayable(event)} className="mb-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <h3 className="mb-4 font-bold text-slate-900">Record a supplier bill or other amount owed</h3>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <label className="text-sm font-medium text-slate-700">
@@ -240,7 +240,7 @@ const AccountsPage = () => {
           </form>
         )}
 
-        <section className="mb-5 flex items-center justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="mb-5 flex items-center justify-between border-l-4 border-red-700 bg-white p-4 sm:p-5">
           <div>
             <p className="text-sm font-medium text-slate-500">
               {type === 'receivables' ? 'Total customer debt' : 'Total business payables'}
@@ -250,8 +250,8 @@ const AccountsPage = () => {
           <span className="rounded-xl bg-red-50 p-3 text-red-700"><Wallet size={23} /></span>
         </section>
 
-        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-4">
+        <section className="overflow-hidden border-y border-slate-200 bg-white sm:rounded-lg sm:border">
+          <div className="border-b border-slate-200 px-4 py-4 sm:px-5">
             <h3 className="font-bold text-slate-900">
               {type === 'receivables' ? 'Customers with an outstanding balance' : 'Open amounts to pay'}
             </h3>
@@ -309,8 +309,8 @@ const AccountsPage = () => {
       </main>
 
       {selectedAccount && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/50 p-4">
-          <form onSubmit={(event) => void handleRecordPayment(event)} className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-30 flex items-center justify-center overflow-y-auto bg-slate-950/50 p-3 sm:p-4">
+          <form onSubmit={(event) => void handleRecordPayment(event)} className="my-auto w-full max-w-md rounded-xl bg-white p-4 shadow-xl sm:p-6">
             <div className="mb-4 flex items-start justify-between">
               <div>
                 <h3 className="text-lg font-bold text-slate-900">Record payment</h3>

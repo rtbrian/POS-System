@@ -66,41 +66,43 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="flex min-h-dvh flex-col bg-slate-50 lg:h-dvh lg:flex-row">
       <aside
-        className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-slate-950 text-white transition-all duration-300 flex flex-col shadow-xl`}
+        className={`flex w-full shrink-0 flex-row items-center bg-slate-950 text-white shadow-xl transition-all duration-300 lg:h-full lg:flex-col ${isSidebarOpen ? 'lg:w-64' : 'lg:w-20'}`}
       >
-        <div className="h-16 flex items-center justify-center border-b border-slate-800">
-          <div className="flex items-center gap-3 font-bold text-xl text-red-400">
+        <div className="flex h-14 shrink-0 items-center justify-center border-r border-slate-800 px-3 lg:h-16 lg:w-full lg:border-b lg:border-r-0 lg:px-0">
+          <div className="flex items-center gap-2 font-bold text-red-400 lg:gap-3 lg:text-xl">
             <Store size={24} />
-            {isSidebarOpen && <span>Frima Auto</span>}
+            <span className="hidden lg:inline">Frima Auto</span>
           </div>
         </div>
 
-        <nav className="flex-1 py-6 px-3 space-y-2" aria-label="Main navigation">
+        <nav className="flex min-w-0 flex-1 flex-row gap-1 overflow-x-auto px-2 py-2 lg:flex-col lg:gap-0 lg:space-y-2 lg:overflow-visible lg:px-3 lg:py-6" aria-label="Main navigation">
           <SidebarItem icon={<LayoutDashboard size={20} />} text="Dashboard" active isOpen={isSidebarOpen} onClick={() => {}} />
           <SidebarItem icon={<ShoppingCart size={20} />} text="POS / Sale" isOpen={isSidebarOpen} onClick={() => navigate('/pos')} />
           <SidebarItem icon={<Package size={20} />} text="Inventory" isOpen={isSidebarOpen} onClick={() => navigate('/inventory')} />
           <SidebarItem icon={<Users size={20} />} text="Customers & Accounts" isOpen={isSidebarOpen} onClick={() => navigate('/accounts')} />
         </nav>
 
-        <div className="p-4 border-t border-slate-800">
+        <div className="shrink-0 border-l border-slate-800 p-2 lg:w-full lg:border-l-0 lg:border-t lg:p-4">
           <button
             onClick={handleLogout}
-            className={`flex items-center gap-3 text-red-300 hover:text-white hover:bg-slate-800 p-2 rounded-lg transition-colors w-full ${!isSidebarOpen && 'justify-center'}`}
+            aria-label="Logout"
+            title="Logout"
+            className="flex items-center justify-center gap-3 rounded-lg p-2 text-red-300 transition-colors hover:bg-slate-800 hover:text-white lg:w-full lg:justify-start"
           >
             <LogOut size={20} />
-            {isSidebarOpen && <span>Logout</span>}
+            <span className="hidden lg:inline">Logout</span>
           </button>
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10">
+      <div className="flex min-w-0 flex-1 flex-col lg:overflow-hidden">
+        <header className="z-10 flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 lg:h-16">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             aria-label={isSidebarOpen ? 'Collapse navigation' : 'Expand navigation'}
-            className="p-2 hover:bg-slate-100 rounded-lg text-slate-600"
+            className="hidden rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:block"
           >
             <Menu size={20} />
           </button>
@@ -115,33 +117,33 @@ const Dashboard = () => {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-5 md:p-8">
+        <main className="flex-1 p-4 sm:overflow-y-auto sm:p-5 md:p-8">
           <div className="mb-7">
             <p className="text-sm font-semibold uppercase tracking-wider text-red-700">Frima Auto</p>
             <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">Dashboard</h1>
             <p className="mt-1 text-slate-500">A quick look at your store activity.</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-slate-200 bg-slate-200 sm:grid-cols-2 xl:grid-cols-4">
             <button
               onClick={() => navigate('/pos')}
-              className="text-left bg-white p-5 rounded-xl border border-slate-200 hover:border-red-200 hover:shadow-md transition-all group"
+              className="group bg-red-800 p-5 text-left text-white transition-colors hover:bg-red-900"
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-slate-500 text-sm font-medium">Quick action</p>
-                  <h2 className="text-xl font-bold text-slate-900 mt-1 group-hover:text-red-700 transition-colors">Open POS / Sale</h2>
+                  <p className="text-sm font-medium text-red-100">Quick action</p>
+                  <h2 className="mt-1 text-xl font-bold text-white">Open POS / Sale</h2>
                 </div>
-                <span className="p-3 bg-red-50 rounded-lg text-red-700 group-hover:bg-red-700 group-hover:text-white transition-colors">
+                <span className="rounded-lg bg-white/10 p-3 text-white transition-colors group-hover:bg-white/20">
                   <CreditCard size={22} />
                 </span>
               </div>
-              <p className="text-sm text-slate-500 mt-4">Start a new transaction <span aria-hidden="true">→</span></p>
+              <p className="mt-4 text-sm text-red-100">Start a new transaction <span aria-hidden="true">→</span></p>
             </button>
 
             <button
               onClick={() => navigate('/inventory')}
-              className="text-left bg-white p-5 rounded-xl border border-slate-200 hover:border-red-200 hover:shadow-md transition-all group"
+              className="group bg-white p-5 text-left transition-colors hover:bg-slate-50"
             >
               <div className="flex justify-between items-start">
                 <div>
@@ -161,7 +163,7 @@ const Dashboard = () => {
               </p>
             </button>
 
-            <section className="bg-white p-5 rounded-xl border border-slate-200">
+            <section className="bg-white p-5">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-slate-500 text-sm font-medium">Gross sales</p>
@@ -178,7 +180,7 @@ const Dashboard = () => {
               <p className="text-sm text-slate-500 mt-4">{SALES_PERIODS.find((period) => period.value === salesPeriod)?.label}</p>
             </section>
 
-            <section className="bg-white p-5 rounded-xl border border-slate-200">
+            <section className="bg-white p-5">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-slate-500 text-sm font-medium">Transactions</p>
@@ -198,7 +200,7 @@ const Dashboard = () => {
             </section>
           </div>
 
-          <section className="mt-7 bg-white rounded-xl border border-slate-200 shadow-sm">
+          <section className="mt-7 overflow-hidden rounded-xl border border-slate-200 bg-white">
             <div className="flex flex-col gap-4 p-5 border-b border-slate-200 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="flex items-center gap-2">
@@ -291,16 +293,16 @@ const SidebarItem = ({ icon, text, active = false, isOpen, onClick }: SidebarIte
     type="button"
     onClick={onClick}
     aria-current={active ? 'page' : undefined}
-    aria-label={!isOpen ? text : undefined}
-    title={!isOpen ? text : undefined}
+    aria-label={text}
+    title={text}
     className={`
-      flex w-full items-center gap-3 p-3 rounded-lg text-left transition-all
+      flex shrink-0 items-center justify-center gap-3 rounded-lg p-3 text-left transition-all lg:w-full lg:justify-start
       ${active ? 'bg-red-700 text-white shadow-lg shadow-red-950/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
-      ${!isOpen && 'justify-center'}
+      ${!isOpen && 'lg:justify-center'}
     `}
   >
     {icon}
-    {isOpen && <span className="font-medium">{text}</span>}
+    {isOpen && <span className="hidden font-medium lg:inline">{text}</span>}
   </button>
 );
 

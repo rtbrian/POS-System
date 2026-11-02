@@ -95,11 +95,11 @@ const Inventory = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <div className="flex-1 flex flex-col h-full">
+    <div className="min-h-dvh bg-gray-50 lg:flex lg:h-dvh lg:overflow-hidden">
+      <div className="flex min-w-0 flex-col lg:h-full lg:flex-1">
         
         {/* 🟢 HEADER */}
-        <header className="bg-white border-b border-gray-200 p-6 flex justify-between items-center z-10">
+        <header className="z-10 flex flex-col gap-4 border-b border-gray-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div className="flex items-center gap-4">
             <button onClick={() => navigate('/dashboard')} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
               <ArrowLeft className="text-gray-600" size={20} />
@@ -114,7 +114,7 @@ const Inventory = () => {
           
           <button 
             onClick={() => setShowModal(true)}
-            className="bg-red-700 hover:bg-red-800 text-white px-5 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg shadow-red-200 active:scale-95"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-700 px-5 py-2.5 font-bold text-white shadow-lg shadow-red-200 transition-all hover:bg-red-800 active:scale-95 sm:w-auto"
           >
             <Plus size={20} />
             Add Product
@@ -122,9 +122,9 @@ const Inventory = () => {
         </header>
 
         {/* 🟡 TOOLBAR: Search & Filter */}
-        <div className="p-6 pb-0">
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-wrap gap-4 items-center justify-between">
-            <div className="relative flex-1 min-w-[300px]">
+        <div className="p-3 pb-0 sm:p-6 sm:pb-0">
+          <div className="flex flex-col items-stretch justify-between gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 sm:p-4">
+            <div className="relative min-w-0 flex-1 sm:min-w-[240px]">
               <Search className="absolute left-3 top-3 text-gray-400 h-5 w-5" />
               <input 
                 type="text" 
@@ -135,7 +135,7 @@ const Inventory = () => {
               />
             </div>
             
-            <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+            <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
               <Filter size={18} className="text-gray-500" />
               <select 
                 className="bg-transparent text-sm font-medium text-gray-700 outline-none cursor-pointer"
@@ -154,16 +154,16 @@ const Inventory = () => {
         </div>
 
         {(actionError || productsQuery.error) && (
-          <div className="mx-6 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="mx-3 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 sm:mx-6">
             {actionError || getErrorMessage(productsQuery.error, 'Could not load products')}
           </div>
         )}
 
         {/* 🔵 TABLE AREA */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-gray-50 border-b border-gray-200">
+        <div className="p-3 sm:flex-1 sm:overflow-y-auto sm:p-6">
+          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+            <table className="w-full min-w-[760px] border-collapse text-left">
+              <thead className="border-b border-slate-200 bg-slate-50">
                 <tr>
                   <th className="p-4 text-xs font-bold text-gray-500 uppercase">Product Name</th>
                   <th className="p-4 text-xs font-bold text-gray-500 uppercase text-right">Price (KES)</th>
@@ -173,7 +173,7 @@ const Inventory = () => {
                 </tr>
               </thead>
               
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-100">
   {productsQuery.isLoading ? (
     <tr>
       <td colSpan={5} className="p-12 text-center text-gray-400">
@@ -193,7 +193,7 @@ const Inventory = () => {
     products.map((product) => {
       const status = getStockStatus(product.stock);
       return (
-        <tr key={product.id} className="hover:bg-gray-50 transition-colors group">
+        <tr key={product.id} className="group transition-colors hover:bg-slate-50">
           <td className="p-4">
             <p className="font-bold text-gray-800">{product.name}</p>
             <p className="text-xs text-gray-400">ID: #{product.id}</p>
@@ -221,7 +221,7 @@ const Inventory = () => {
             </span>
           </td>
           <td className="p-4 text-right">
-            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center justify-end gap-2 opacity-100 transition-opacity focus-within:opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
               
               {/* EDIT BUTTON (Placeholder for now) */}
               <button 
@@ -247,7 +247,7 @@ const Inventory = () => {
 </tbody>
             </table>
           </div>
-          <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+          <div className="mt-4 flex flex-col gap-3 text-sm text-gray-600 sm:flex-row sm:items-center sm:justify-between">
             <span>
               {productsQuery.data
                 ? `${productsQuery.data.total} products · Page ${productsQuery.data.page} of ${Math.max(productsQuery.data.totalPages, 1)}`
@@ -276,8 +276,8 @@ const Inventory = () => {
 
         {/* 🟣 MODAL POPUP (Updated with New Fields) */}
         {showModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+          <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-3 backdrop-blur-sm animate-in fade-in duration-200 sm:p-4">
+            <div className="my-auto max-h-[94dvh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-2xl">
               
               <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
                 <h2 className="text-lg font-bold text-gray-800">Add New Product</h2>
@@ -286,7 +286,7 @@ const Inventory = () => {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4 p-4 sm:p-6">
                 
                 {/* Name */}
                 <div>
@@ -302,7 +302,7 @@ const Inventory = () => {
                 </div>
 
                 {/* Price & Stock & Category */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Price</label>
                     <input 

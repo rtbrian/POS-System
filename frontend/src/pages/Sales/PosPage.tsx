@@ -121,14 +121,14 @@ const POS = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
+    <div className="flex min-h-dvh flex-col overflow-x-hidden bg-slate-100 lg:h-dvh lg:flex-row lg:overflow-hidden">
       
       {/* 🟢 LEFT SIDE: Product Grid */}
-      <div className="w-2/3 flex flex-col h-full">
+      <div className="flex h-[58dvh] min-h-[360px] flex-col lg:h-full lg:min-h-0 lg:w-2/3">
         
         {/* Header Section */}
-        <div className="bg-white p-4 shadow-sm z-10 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-4">
+        <div className="z-10 border-b border-slate-200 bg-white p-4">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => navigate('/dashboard')} 
@@ -142,7 +142,7 @@ const POS = () => {
             </div>
             
             {/* Search Bar */}
-            <div className="relative w-64">
+            <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-2.5 text-gray-400 h-5 w-5" />
               <input 
                 type="text"
@@ -175,7 +175,7 @@ const POS = () => {
         </div>
 
         {/* Scrollable Grid */}
-        <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+        <div className="flex-1 overflow-y-auto bg-slate-50 p-3 sm:p-6">
           {productsQuery.error ? (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
               {getErrorMessage(productsQuery.error, 'Could not load products')}
@@ -185,22 +185,22 @@ const POS = () => {
           ) : products.length === 0 ? (
             <div className="flex items-center justify-center h-64 text-gray-500">No products match your filters.</div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 lg:gap-4">
               {products.map((product) => (
                 <div
                   key={product.id}
                   onClick={() => addToCart(product)}
                   aria-disabled={product.stock < 1}
-                  className={`bg-white p-4 rounded-xl shadow-sm border border-gray-100 transition-all group flex flex-col items-center text-center h-48 justify-between relative overflow-hidden ${
-                    product.stock > 0 ? 'cursor-pointer hover:shadow-lg hover:border-red-400' : 'cursor-not-allowed opacity-60'
+                  className={`group relative flex h-48 flex-col items-center justify-between overflow-hidden rounded-lg border border-slate-200 border-b-2 border-b-transparent bg-white p-3 text-center transition-colors sm:p-4 ${
+                    product.stock > 0 ? 'cursor-pointer hover:border-b-red-700 hover:bg-red-50/30' : 'cursor-not-allowed opacity-60'
                   }`}
                 >
                   <div className="absolute top-0 right-0 bg-red-700 text-white text-xs font-bold px-2 py-1 rounded-bl-lg">
                     Stock: {product.stock}
                   </div>
                   
-                  <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                    <Package className="text-red-600 h-8 w-8" />
+                  <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 transition-colors group-hover:bg-red-100 sm:h-14 sm:w-14">
+                    <Package className="h-6 w-6 text-red-700 sm:h-7 sm:w-7" />
                   </div>
                   
                   <div>
@@ -208,7 +208,7 @@ const POS = () => {
                     <p className="text-gray-500 text-sm">{product.description || 'No description'}</p>
                   </div>
                   
-                  <div className="mt-2 font-bold text-red-700 bg-red-50 px-3 py-1 rounded-lg">
+                  <div className="mt-2 border-t border-slate-100 pt-2 font-bold text-red-800">
                     KES {Number(product.price).toLocaleString()}
                   </div>
                 </div>
@@ -242,10 +242,10 @@ const POS = () => {
       </div>
 
       {/* 🔵 RIGHT SIDE: Cart / Receipt */}
-      <div className="w-1/3 bg-white shadow-2xl flex flex-col h-full border-l border-gray-200 z-20">
+      <div className="z-20 flex min-h-[70dvh] flex-col border-t border-slate-200 bg-white lg:h-full lg:min-h-0 lg:w-1/3 lg:border-l lg:border-t-0">
         
         {/* Cart Header */}
-        <div className="p-5 bg-gray-900 text-white">
+        <div className="border-b-4 border-red-700 bg-slate-950 p-5 text-white">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <ShoppingCart size={20} className="text-red-300" />
@@ -268,7 +268,7 @@ const POS = () => {
             </div>
           ) : (
             cart.map((item) => (
-              <div key={item.id} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+              <div key={item.id} className="flex items-center gap-3 border-b border-slate-200 bg-white px-1 py-3 last:border-b-0">
                 {/* Icon */}
                 <div className="w-10 h-10 bg-white rounded-md flex items-center justify-center border border-gray-200 text-red-600">
                   <Package size={20} />
@@ -304,7 +304,7 @@ const POS = () => {
         </div>
 
         {/* Footer: Totals & Action */}
-        <div className="p-6 bg-gray-50 border-t border-gray-200">
+        <div className="border-t border-gray-200 bg-gray-50 p-4 sm:p-6">
           {saleMessage && (
             <p role="status" className="mb-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
               {saleMessage}
