@@ -1,7 +1,7 @@
 # POS System
 
-React/Vite frontend with an Express API, PostgreSQL product storage, and Supabase
-Auth for identity.
+Frima Auto is a motorcycle spare-parts POS with a React/Vite frontend, Express
+API, PostgreSQL product and sales storage, and Supabase Auth for identity.
 
 ## Local setup
 
@@ -51,16 +51,40 @@ automatically migrated; users need Supabase Auth accounts and password setup/res
   and `stockStatus=low|out`; it returns `{ data, page, limit, total, totalPages }`.
 - Product create/update input is validated; product reads, updates, and deletes
   are scoped to the authenticated business.
+- `POST /api/sales` records paid or credit sales, stores item/price snapshots,
+  and deducts stock in one database transaction. Checkout requires an
+  `Idempotency-Key` UUID so retrying the same request cannot charge stock twice.
+  Payable creation and account payments also use idempotency keys to prevent
+  duplicate records when a request is retried.
+- `GET /api/sales/analytics?period=today|7days|30days|90days` returns sales
+  totals and the latest transactions for the dashboard.
+- `/api/accounts` lists open customer receivables and supplier/other payables.
+  Payments are recorded separately and cannot exceed the remaining balance.
+- `GET /api/accounts/export.csv?type=receivables|payables` downloads open
+  account balances as a UTF-8 CSV that can be opened in Excel or imported into
+  Google Sheets. PostgreSQL remains the source of truth; Google OAuth is not
+  required for the CSV export.
 - Errors use `{ error: { code, message, details? } }`.
 
-## Known next steps
+## Sales and account records
 
-- Confirm the deployed PostgreSQL schema and add versioned migrations before
-  changing columns. The included migration only adds indexes when the expected
-  existing products columns are present; review it before applying to production.
-- Implement server-side sale creation with transactional stock deduction and
-  idempotency before enabling the POS payment button.
-- Add integration tests for Supabase token validation, business isolation, and
-  product CRUD against a disposable PostgreSQL database.
+- Run `npm run db:migrate` from `backend` before using sales or accounts. This
+  applies the versioned sales/account tables and indexes.
+- In the POS, selecting **Paid** records the cashier-confirmed payment method;
+  it does not contact a payment provider. Selecting **On credit** requires a
+  customer name and adds the sale to open receivables. Customer payments and
+  supplier/other-payee payments can be recorded from **Customers & Accounts**.
+- The existing POS tax calculation is retained at 16%. Confirm the correct tax
+  rate for the business before using totals for tax reporting.
+- Supplier payables are entered manually and do not yet create a stock receipt.
+- Full Google Sheets synchronization is not configured. CSV export can be
+  opened in spreadsheet software; direct Google sync would require Google
+  Cloud OAuth credentials and setup.
+- Confirm the deployed PostgreSQL schema and review migrations before applying
+  them to production. The finance migration creates new tables; it does not
+  modify the existing products table.
+- Add integration tests for Supabase token validation, business isolation,
+  concurrent stock changes, and checkout/payment transactions against a
+  disposable PostgreSQL database.
 - Review `npm audit` findings and upgrade dependencies with focused compatibility
   checks; do not apply force upgrades blindly.

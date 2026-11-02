@@ -6,6 +6,7 @@ import Inventory from './pages/Inventory/Inventory';
 import Login from './pages/Login/Login';
 import Register from './pages/Login/Register';
 import POS from './pages/Sales/PosPage';
+import AccountsPage from './pages/Accounts/AccountsPage';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
           <Route path="/pos" element={<ProtectedRoute><POS /></ProtectedRoute>} />
+          <Route path="/accounts" element={<ProtectedRoute><AccountsPage /></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>

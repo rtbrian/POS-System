@@ -4,29 +4,58 @@ import { logoutUser } from '../../services/authservice';
 import { getErrorMessage } from '../../services/api';
 import { useAuth } from '../../auth/useAuth';
 import { useProducts } from '../../hooks/useProducts';
+import { useSalesAnalytics } from '../../hooks/useFinance';
+import type { FinancePeriod } from '../../services/financeService';
 import type { ReactNode } from 'react';
-import { 
-  LayoutDashboard, 
-  ShoppingCart, 
-  Package, 
-  Users, 
-  LogOut, 
-  Menu, 
+import {
+  BarChart3,
+  CalendarDays,
+  CreditCard,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Package,
+  ShoppingCart,
   Store,
-  CreditCard
+  Users,
 } from 'lucide-react';
+
+const SALES_PERIODS: { value: FinancePeriod; label: string; days: number }[] = [
+  { value: 'today', label: 'Today', days: 1 },
+  { value: '7days', label: 'Last 7 days', days: 7 },
+  { value: '30days', label: 'Last 30 days', days: 30 },
+  { value: '90days', label: 'Last 90 days', days: 90 },
+];
+
+const getPeriodDescription = (period: FinancePeriod): string => {
+  const selectedPeriod = SALES_PERIODS.find((option) => option.value === period);
+  if (!selectedPeriod) return '';
+
+  const end = new Date();
+  const start = new Date(end);
+  start.setDate(start.getDate() - selectedPeriod.days + 1);
+
+  const formatDate = (date: Date) => new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date);
+
+  return period === 'today'
+    ? formatDate(end)
+    : `${formatDate(start)} – ${formatDate(end)}`;
+};
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
   const email = session?.user.email ?? 'User';
-  
-  // State for UI and Data
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [salesPeriod, setSalesPeriod] = useState<FinancePeriod>('30days');
   const productsQuery = useProducts({ page: 1, limit: 1 });
+  const salesQuery = useSalesAnalytics(salesPeriod);
   const productCount = productsQuery.data?.total;
 
-  // 2. Logout Logic
   const handleLogout = async () => {
     try {
       await logoutUser();
@@ -37,31 +66,28 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
-
-      {/* 🟢 SIDEBAR (Navigation) */}
-      <aside 
-        className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-gray-900 text-white transition-all duration-300 flex flex-col shadow-xl`}
+    <div className="flex h-screen bg-slate-50">
+      <aside
+        className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-slate-950 text-white transition-all duration-300 flex flex-col shadow-xl`}
       >
-        <div className="h-16 flex items-center justify-center border-b border-gray-800">
-          <div className="flex items-center gap-3 font-bold text-xl text-blue-400">
+        <div className="h-16 flex items-center justify-center border-b border-slate-800">
+          <div className="flex items-center gap-3 font-bold text-xl text-red-400">
             <Store size={24} />
-            {isSidebarOpen && <span>B.M.Tech POS</span>}
+            {isSidebarOpen && <span>Frima Auto</span>}
           </div>
         </div>
 
-        <nav className="flex-1 py-6 px-3 space-y-2">
-          {/* We pass 'active' to highlight the current page */}
+        <nav className="flex-1 py-6 px-3 space-y-2" aria-label="Main navigation">
           <SidebarItem icon={<LayoutDashboard size={20} />} text="Dashboard" active isOpen={isSidebarOpen} onClick={() => {}} />
           <SidebarItem icon={<ShoppingCart size={20} />} text="POS / Sale" isOpen={isSidebarOpen} onClick={() => navigate('/pos')} />
           <SidebarItem icon={<Package size={20} />} text="Inventory" isOpen={isSidebarOpen} onClick={() => navigate('/inventory')} />
-          <SidebarItem icon={<Users size={20} />} text="Customers" isOpen={isSidebarOpen} onClick={() => {}} />
+          <SidebarItem icon={<Users size={20} />} text="Customers & Accounts" isOpen={isSidebarOpen} onClick={() => navigate('/accounts')} />
         </nav>
 
-        <div className="p-4 border-t border-gray-800">
-          <button 
+        <div className="p-4 border-t border-slate-800">
+          <button
             onClick={handleLogout}
-            className={`flex items-center gap-3 text-red-400 hover:text-red-300 hover:bg-gray-800 p-2 rounded-lg transition-colors w-full ${!isSidebarOpen && 'justify-center'}`}
+            className={`flex items-center gap-3 text-red-300 hover:text-white hover:bg-slate-800 p-2 rounded-lg transition-colors w-full ${!isSidebarOpen && 'justify-center'}`}
           >
             <LogOut size={20} />
             {isSidebarOpen && <span>Logout</span>}
@@ -69,88 +95,183 @@ const Dashboard = () => {
         </div>
       </aside>
 
-      {/* 🔵 MAIN CONTENT */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        
-        {/* Top Header */}
-        <header className="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-10">
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10">
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            aria-label={isSidebarOpen ? 'Collapse navigation' : 'Expand navigation'}
+            className="p-2 hover:bg-slate-100 rounded-lg text-slate-600"
+          >
             <Menu size={20} />
           </button>
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold text-gray-700">{email}</p>
+              <p className="text-sm font-bold text-slate-700">{email}</p>
               <p className="text-xs text-green-600">Online</p>
             </div>
-            <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
+            <div className="h-10 w-10 bg-red-50 rounded-full flex items-center justify-center text-red-700 font-bold">
               {email.charAt(0).toUpperCase()}
             </div>
           </div>
         </header>
 
-        {/* Scrollable Dashboard Area */}
-        <main className="flex-1 overflow-y-auto p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Overview</h2>
+        <main className="flex-1 overflow-y-auto p-5 md:p-8">
+          <div className="mb-7">
+            <p className="text-sm font-semibold uppercase tracking-wider text-red-700">Frima Auto</p>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">Dashboard</h1>
+            <p className="mt-1 text-slate-500">A quick look at your store activity.</p>
+          </div>
 
-          {/* 👇 YOUR CARDS (Organized in a Grid) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            {/* Card 1: New Sale (Clickable) */}
-            <div 
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+            <button
               onClick={() => navigate('/pos')}
-              className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all cursor-pointer group border-l-4 border-l-blue-500"
+              className="text-left bg-white p-5 rounded-xl border border-slate-200 hover:border-red-200 hover:shadow-md transition-all group"
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-gray-500 text-sm font-medium">Quick Action</p>
-                  <h3 className="text-2xl font-bold text-gray-800 mt-1 group-hover:text-blue-600 transition-colors">Open POS/Sale</h3>
+                  <p className="text-slate-500 text-sm font-medium">Quick action</p>
+                  <h2 className="text-xl font-bold text-slate-900 mt-1 group-hover:text-red-700 transition-colors">Open POS / Sale</h2>
                 </div>
-                <div className="p-3 bg-blue-50 rounded-lg text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                  <CreditCard size={24} />
-                </div>
+                <span className="p-3 bg-red-50 rounded-lg text-red-700 group-hover:bg-red-700 group-hover:text-white transition-colors">
+                  <CreditCard size={22} />
+                </span>
               </div>
-              <p className="text-sm text-gray-400 mt-4">Start a new transaction &rarr;</p>
-            </div>
+              <p className="text-sm text-slate-500 mt-4">Start a new transaction <span aria-hidden="true">→</span></p>
+            </button>
 
-            {/* Card 2: Inventory Count (Connected to your Logic) */}
-            <div 
+            <button
               onClick={() => navigate('/inventory')}
-              className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all cursor-pointer group border-l-4 border-l-green-500"
+              className="text-left bg-white p-5 rounded-xl border border-slate-200 hover:border-red-200 hover:shadow-md transition-all group"
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-gray-500 text-sm font-medium">Total Products</p>
-                  {/* 👇 DISPLAYING YOUR STATE HERE */}
-                  <h3 className="text-2xl font-bold text-gray-800 mt-1">
+                  <p className="text-slate-500 text-sm font-medium">Inventory</p>
+                  <h2 className="text-2xl font-bold text-slate-900 mt-1">
                     {productsQuery.isLoading ? '…' : productCount ?? '—'}
-                  </h3>
+                  </h2>
                 </div>
-                <div className="p-3 bg-green-50 rounded-lg text-green-600 group-hover:bg-green-600 group-hover:text-white transition-colors">
-                  <Package size={24} />
-                </div>
+                <span className="p-3 bg-slate-100 rounded-lg text-slate-700">
+                  <Package size={22} />
+                </span>
               </div>
-              <p className="text-sm text-gray-400 mt-4">
+              <p className="text-sm text-slate-500 mt-4">
                 {productsQuery.error
                   ? getErrorMessage(productsQuery.error, 'Could not load products')
-                  : 'Items currently in stock'}
+                  : 'Products in your catalog'}
               </p>
-            </div>
+            </button>
 
-            {/* Card 3: Active Orders (Static for now) */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-purple-500">
+            <section className="bg-white p-5 rounded-xl border border-slate-200">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-gray-500 text-sm font-medium">Active Orders</p>
-                  <h3 className="text-2xl font-bold text-gray-800 mt-1">0</h3>
+                  <p className="text-slate-500 text-sm font-medium">Gross sales</p>
+                  <h2 className="text-2xl font-bold text-slate-900 mt-1">
+                    {salesQuery.isLoading ? '…' : salesQuery.isError
+                      ? '—'
+                      : `KES ${Number(salesQuery.data?.grossSales ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  </h2>
                 </div>
-                <div className="p-3 bg-purple-50 rounded-lg text-purple-600">
-                  <ShoppingCart size={24} />
-                </div>
+                <span className="p-3 bg-amber-50 rounded-lg text-amber-700">
+                  <BarChart3 size={22} />
+                </span>
               </div>
-              <p className="text-sm text-gray-400 mt-4">Orders in progress</p>
+              <p className="text-sm text-slate-500 mt-4">{SALES_PERIODS.find((period) => period.value === salesPeriod)?.label}</p>
+            </section>
+
+            <section className="bg-white p-5 rounded-xl border border-slate-200">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-slate-500 text-sm font-medium">Transactions</p>
+                  <h2 className="text-2xl font-bold text-slate-900 mt-1">
+                    {salesQuery.isLoading ? '…' : salesQuery.isError ? '—' : salesQuery.data?.transactionCount ?? 0}
+                  </h2>
+                </div>
+                <span className="p-3 bg-slate-100 rounded-lg text-slate-700">
+                  <ShoppingCart size={22} />
+                </span>
+              </div>
+              <p className="text-sm text-slate-500 mt-4">
+                {salesQuery.isError
+                  ? getErrorMessage(salesQuery.error, 'Could not load sales')
+                  : 'In the selected period'}
+              </p>
+            </section>
+          </div>
+
+          <section className="mt-7 bg-white rounded-xl border border-slate-200 shadow-sm">
+            <div className="flex flex-col gap-4 p-5 border-b border-slate-200 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <BarChart3 size={20} className="text-red-700" />
+                  <h2 className="text-lg font-bold text-slate-900">Sales analytics</h2>
+                </div>
+                <p className="mt-1 text-sm text-slate-500">{getPeriodDescription(salesPeriod)}</p>
+              </div>
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                <CalendarDays size={17} aria-hidden="true" />
+                <span className="sr-only">Sales period</span>
+                <select
+                  value={salesPeriod}
+                  onChange={(event) => setSalesPeriod(event.target.value as FinancePeriod)}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-700 focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-100"
+                >
+                  {SALES_PERIODS.map((period) => (
+                    <option key={period.value} value={period.value}>{period.label}</option>
+                  ))}
+                </select>
+              </label>
             </div>
 
-          </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th scope="col" className="px-5 py-3 font-semibold">Sale</th>
+                    <th scope="col" className="px-5 py-3 font-semibold">Date</th>
+                    <th scope="col" className="px-5 py-3 font-semibold">Customer</th>
+                    <th scope="col" className="px-5 py-3 font-semibold">Items</th>
+                    <th scope="col" className="px-5 py-3 font-semibold text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {salesQuery.isLoading ? (
+                <tr>
+                  <td colSpan={5} className="px-5 py-12 text-center text-slate-500">Loading sales…</td>
+                </tr>
+                  ) : salesQuery.isError ? (
+                <tr>
+                  <td colSpan={5} className="px-5 py-12 text-center text-red-700">
+                    {getErrorMessage(salesQuery.error, 'Could not load sales analytics')}
+                  </td>
+                </tr>
+                  ) : !salesQuery.data || salesQuery.data.sales.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-5 py-12 text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                      <BarChart3 size={22} />
+                    </div>
+                    <p className="mt-3 font-semibold text-slate-800">No sales in this period</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Completed sales from {getPeriodDescription(salesPeriod)} will appear here.
+                    </p>
+                  </td>
+                </tr>
+                  ) : salesQuery.data.sales.map((sale) => (
+                <tr key={sale.id} className="border-t border-slate-100 text-slate-700">
+                  <td className="px-5 py-3 font-semibold text-slate-900">#{sale.id}</td>
+                  <td className="px-5 py-3">{new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(sale.createdAt))}</td>
+                  <td className="px-5 py-3">{sale.customerName ?? 'Walk-in'}</td>
+                  <td className="px-5 py-3">{sale.itemCount}</td>
+                  <td className="px-5 py-3 text-right font-semibold">KES {Number(sale.total).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                </tr>
+                  ))}
+                </tbody>
+              </table>
+              </div>
+              <p className="border-t border-slate-100 px-5 py-3 text-xs text-slate-500">
+                Gross sales include paid and credit sales. Credit balances are listed under Customers & Accounts.
+              </p>
+          </section>
         </main>
       </div>
     </div>
@@ -165,20 +286,22 @@ interface SidebarItemProps {
   onClick: () => void;
 }
 
-const SidebarItem = ({ icon, text, active = false, isOpen, onClick }: SidebarItemProps) => {
-  return (
-    <div 
-      onClick={onClick}
-      className={`
-        flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all
-        ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}
-        ${!isOpen && 'justify-center'}
-      `}
-    >
-      {icon}
-      {isOpen && <span className="font-medium">{text}</span>}
-    </div>
-  );
-};
+const SidebarItem = ({ icon, text, active = false, isOpen, onClick }: SidebarItemProps) => (
+  <button
+    type="button"
+    onClick={onClick}
+    aria-current={active ? 'page' : undefined}
+    aria-label={!isOpen ? text : undefined}
+    title={!isOpen ? text : undefined}
+    className={`
+      flex w-full items-center gap-3 p-3 rounded-lg text-left transition-all
+      ${active ? 'bg-red-700 text-white shadow-lg shadow-red-950/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
+      ${!isOpen && 'justify-center'}
+    `}
+  >
+    {icon}
+    {isOpen && <span className="font-medium">{text}</span>}
+  </button>
+);
 
 export default Dashboard;

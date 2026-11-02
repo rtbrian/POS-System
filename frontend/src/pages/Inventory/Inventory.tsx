@@ -106,7 +106,7 @@ const Inventory = () => {
             </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                <Package className="text-blue-600" /> Inventory Management
+                <Package className="text-red-700" /> Inventory Management
               </h1>
               <p className="text-sm text-gray-500 mt-1">Track stock levels and manage catalog</p>
             </div>
@@ -114,7 +114,7 @@ const Inventory = () => {
           
           <button 
             onClick={() => setShowModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-200 active:scale-95"
+            className="bg-red-700 hover:bg-red-800 text-white px-5 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg shadow-red-200 active:scale-95"
           >
             <Plus size={20} />
             Add Product
@@ -129,7 +129,7 @@ const Inventory = () => {
               <input 
                 type="text" 
                 placeholder="Search products..." 
-                className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 focus:bg-white transition-all"
+                className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-gray-50 focus:bg-white transition-all"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -178,7 +178,7 @@ const Inventory = () => {
     <tr>
       <td colSpan={5} className="p-12 text-center text-gray-400">
         <div className="flex flex-col items-center justify-center gap-2">
-          <Loader2 className="animate-spin h-8 w-8 text-blue-500" />
+          <Loader2 className="animate-spin h-8 w-8 text-red-600" />
           <p>Loading Inventory...</p>
         </div>
       </td>
@@ -226,7 +226,7 @@ const Inventory = () => {
               {/* EDIT BUTTON (Placeholder for now) */}
               <button 
                 onClick={() => alert("Edit feature coming soon!")}
-                className="p-2 hover:bg-blue-50 text-gray-500 hover:text-blue-600 rounded-lg"
+                className="p-2 hover:bg-red-50 text-gray-500 hover:text-red-700 rounded-lg"
               >
                 <Edit size={16} />
               </button>
@@ -293,7 +293,7 @@ const Inventory = () => {
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Product Name</label>
                   <input 
                     type="text" 
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
                     placeholder="e.g., Milk 500ml"
                     value={formData.name}
                     onChange={e => setFormData({...formData, name: e.target.value})}
@@ -307,7 +307,7 @@ const Inventory = () => {
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Price</label>
                     <input 
                       type="number" 
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 outline-none"
                       placeholder="0.00"
                       value={formData.price}
                       onChange={e => setFormData({...formData, price: e.target.value})}
@@ -318,7 +318,7 @@ const Inventory = () => {
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Stock</label>
                     <input 
                       type="number" 
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 outline-none"
                       placeholder="0"
                       value={formData.stock}
                       onChange={e => setFormData({...formData, stock: e.target.value})}
@@ -328,17 +328,18 @@ const Inventory = () => {
                   <div className="col-span-2 md:col-span-1">
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Category</label>
                     <select
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 outline-none bg-white"
                       value={formData.category}
                       onChange={e => setFormData({...formData, category: e.target.value})}
                       required
                     >
                       <option value="">Select...</option>
-                      <option value="Dairy">Dairy</option>
-                      <option value="Bakery">Bakery</option>
-                      <option value="Drinks">Drinks</option>
-                      <option value="Pantry">Pantry</option>
-                      <option value="Snacks">Snacks</option>
+                      <option value="Engine">Engine</option>
+                      <option value="Electrical">Electrical</option>
+                      <option value="Brakes">Brakes</option>
+                      <option value="Tyres & Wheels">Tyres &amp; Wheels</option>
+                      <option value="Body & Controls">Body &amp; Controls</option>
+                      <option value="Filters & Oils">Filters &amp; Oils</option>
                       <option value="Other">Other</option>
                     </select>
                   </div>
@@ -348,7 +349,7 @@ const Inventory = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Description (Optional)</label>
                   <textarea 
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 outline-none resize-none"
                     placeholder="Enter product details..."
                     rows={3}
                     value={formData.description}
@@ -361,7 +362,7 @@ const Inventory = () => {
                   <button 
                     type="submit" 
                     disabled={createMutation.isPending}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-bold shadow-md shadow-blue-200 transition-all flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-red-700 hover:bg-red-800 text-white py-2.5 rounded-lg font-bold shadow-md shadow-red-200 transition-all flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {createMutation.isPending ? (
                       <>

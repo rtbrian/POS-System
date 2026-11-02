@@ -7,7 +7,7 @@
     "start": "node dist/src/index.js",
     "dev": "tsx watch src/index.ts",
     "db:migrate": "tsx src/script/migrate.ts",
-    "test": "tsx --test src/inventory-service/validators/product.validator.test.ts"
+    "test": "tsx --test src/inventory-service/validators/product.validator.test.ts src/finance/validators/finance.validator.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.90.1",

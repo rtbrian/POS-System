@@ -53,12 +53,12 @@ const Register = () => {
               value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} required />
           </div>
           <button type="submit" disabled={loading}
-            className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700 transition">
+            className="w-full bg-red-700 text-white p-2 rounded hover:bg-red-800 transition">
             {loading ? 'Creating Account...' : 'Register'}
           </button>
         </form>
         <p className="mt-4 text-center text-sm text-gray-600">
-          Already have an account? <Link to="/login" className="text-blue-500 hover:underline">Log in</Link>
+          Already have an account? <Link to="/login" className="text-red-700 hover:underline">Log in</Link>
         </p>
       </div>
     </div>
