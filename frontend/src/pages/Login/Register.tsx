@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { registerUser } from '../../services/authservice'; // Note the path change (../../)
 import { getErrorMessage } from '../../services/api';
+import ResendConfirmation from '../../components/ResendConfirmation';
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -10,6 +11,7 @@ const Register = () => {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
+  const [confirmationPending, setConfirmationPending] = useState(false);
   const navigate = useNavigate();
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -24,6 +26,7 @@ const Register = () => {
         navigate('/dashboard');
       } else {
         setNotice('Check your email to confirm your account, then sign in.');
+        setConfirmationPending(true);
       }
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Registration failed'));
@@ -57,6 +60,7 @@ const Register = () => {
             {loading ? 'Creating Account...' : 'Register'}
           </button>
         </form>
+        {confirmationPending && <ResendConfirmation email={email} cooldownOnMount />}
         <p className="mt-4 text-center text-sm text-gray-600">
           Already have an account? <Link to="/login" className="text-red-700 hover:underline">Log in</Link>
         </p>

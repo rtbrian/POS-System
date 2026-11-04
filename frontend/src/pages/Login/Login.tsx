@@ -3,6 +3,7 @@ import { loginUser } from '../../services/authservice';
 import { Lock, Mail, Eye, EyeOff, Store, Loader2 } from 'lucide-react'; // Added new icons
 import { useNavigate, Link } from 'react-router-dom';
 import { getErrorMessage } from '../../services/api';
+import ResendConfirmation from '../../components/ResendConfirmation';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -135,6 +136,7 @@ const Login = () => {
               )}
             </button>
           </form>
+          <ResendConfirmation email={email} />
           <div className="mt-4 text-center border-t pt-4">
             <p className="text-sm text-gray-600">
             Don't have an account?{' '}

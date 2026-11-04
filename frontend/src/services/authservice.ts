@@ -21,6 +21,17 @@ export const registerUser = async (email: string, password: string) => {
   return data;
 };
 
+export const resendSignupConfirmation = async (email: string): Promise<void> => {
+  const { error } = await getSupabaseClient().auth.resend({
+    type: 'signup',
+    email: email.trim(),
+    options: {
+      emailRedirectTo: `${window.location.origin}/login`,
+    },
+  });
+  if (error) throw error;
+};
+
 export const logoutUser = async (): Promise<void> => {
   const { error } = await getSupabaseClient().auth.signOut();
   if (error) throw error;
